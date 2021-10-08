@@ -211,7 +211,7 @@ namespace LAB
                     case MethodEnum.WordsFrequencies:
                         Dictionary<string, int> wordsFreq = textFile.WordsFrequencies(out err);
                         if (!string.IsNullOrEmpty(err)) Console.WriteLine(err);
-                        foreach (KeyValuePair<string, int> kvp in wordsFreq.OrderBy(kvp => kvp.Key))
+                        else foreach (KeyValuePair<string, int> kvp in wordsFreq.OrderBy(kvp => kvp.Key))
                         {
                             Console.WriteLine($"{kvp.Key}: {kvp.Value}");
                         }
