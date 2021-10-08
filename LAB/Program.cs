@@ -8,7 +8,7 @@ namespace LAB
     {
         static void Main(string[] args)
         {
-            TextFile.Run(args, TextFile.METHOD_COUNTWORDS);
+            TextFile.Run(args, TextFile.MethodEnum.WordsFrequencies);
         }
     }
 }
