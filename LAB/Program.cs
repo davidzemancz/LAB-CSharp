@@ -8,12 +8,7 @@ namespace LAB
     {
         static void Main(string[] args)
         {
-            if (Debugger.IsAttached && args?.Length == 0)
-            {
-                args = PocitaniSlov.GetArgs();
-            }
-
-            PocitaniSlov.Run(args);
+            TextFile.Run(args, TextFile.METHOD_COUNTWORDS);
         }
     }
 }
