@@ -146,10 +146,10 @@ namespace LAB
         /// </summary>
         /// <param name="err">Error text</param>
         /// <returns>Occurrences of each word in text file</returns>
-        public SortedDictionary<string, int> WordsFrequencies(out string err)
+        public Dictionary<string, int> WordsFrequencies(out string err)
         {
             err = "";
-            SortedDictionary<string, int> wordFrequencies = new SortedDictionary<string, int>();
+            Dictionary<string, int> wordFrequencies = new Dictionary<string, int>();
             try
             {
                 if (this.ValidateFilename(out err))
@@ -209,9 +209,9 @@ namespace LAB
                         else Console.WriteLine(words);
                         break;
                     case MethodEnum.WordsFrequencies:
-                        SortedDictionary<string, int> wordsFreq = textFile.WordsFrequencies(out err);
+                        Dictionary<string, int> wordsFreq = textFile.WordsFrequencies(out err);
                         if (!string.IsNullOrEmpty(err)) Console.WriteLine(err);
-                        foreach (KeyValuePair<string, int> kvp in wordsFreq)
+                        foreach (KeyValuePair<string, int> kvp in wordsFreq.OrderBy(kvp => kvp.Key))
                         {
                             Console.WriteLine($"{kvp.Key}: {kvp.Value}");
                         }
