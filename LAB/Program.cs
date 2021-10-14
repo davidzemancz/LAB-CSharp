@@ -8,7 +8,7 @@ namespace LAB
     {
         static void Main(string[] args)
         {
-            TextFile.Run(args, TextFile.MethodEnum.WordsFrequencies);
+            TextFile.Run(args, TextFile.MethodEnum.AlignContent);
         }
     }
 }
