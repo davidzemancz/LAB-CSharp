@@ -202,7 +202,7 @@ namespace LAB
         {
             err = "";
             List<string> lineWords = new List<string>();
-            int lineLengthWithouWhitespaces = 0;
+            int lineLength = 0;
             try
             {
                 if (this.ValidateFilename(out err))
@@ -210,60 +210,34 @@ namespace LAB
                     using (StreamWriter streamWriter = new StreamWriter(outputFilename))
                     using (StreamReaderEx streamReader = new StreamReaderEx(this.Filename))
                     {
+                        streamWriter.NewLine = "\r";
                         while (!streamReader.EndOfStream)
                         {
                             string word = streamReader.ReadWord();
                             int wordLength = word.Length;
 
-                            int lineLengthWithWhitespaces = lineLengthWithouWhitespaces + lineWords.Count - 1 + 1 + wordLength;
-                            if ((lineLengthWithWhitespaces >= maxLineLength && lineWords.Count > 0))
+                            if (lineLength + wordLength >= maxLineLength && lineWords.Count > 0)
                             {
-                                lineLengthWithWhitespaces = lineLengthWithouWhitespaces + lineWords.Count - 1;
-
-                                string newLine = "";
-                                if (lineLengthWithWhitespaces > maxLineLength)
-                                {
-                                    Assert.IsTrue(lineWords.Count == 1);
-                                    newLine = lineWords[0];
-                                }
-                                else
-                                {
-                                    int neededWhitespaces = maxLineLength - lineLengthWithWhitespaces;
-                                    int extreNeededWhitespaces = 0;
-                                    int neededWhitespacesPerWord = 0;
-                                    
-                                    if (lineWords.Count > 1)
-                                    {
-                                        extreNeededWhitespaces = neededWhitespaces % (lineWords.Count - 1);
-                                        neededWhitespacesPerWord = (neededWhitespaces - extreNeededWhitespaces) / (lineWords.Count - 1);
-                                    }
-
-                                    newLine = lineWords[0] + " ";
-                                    for (int i = 1; i < lineWords.Count; i++)
-                                    {
-                                        string lineWord = new string(' ', neededWhitespacesPerWord) + lineWords[i];
-                                        if (extreNeededWhitespaces-- > 0) lineWord = " " + lineWord;
-
-                                        if (i == lineWords.Count - 1) newLine += lineWord;
-                                        else newLine += lineWord + " ";
-
-                                    }
-                                }
-                                streamWriter.WriteLine(newLine);
+                                this.WriteAlignedLine(streamWriter, lineWords, lineLength, maxLineLength);
 
                                 lineWords.Clear();
-                                lineLengthWithouWhitespaces = 0;
+                                lineLength = 0;
                             }
 
                             lineWords.Add(word);
-                            lineLengthWithouWhitespaces += wordLength;
+                            lineLength += wordLength + 1;
+                        }
+
+                        if (lineWords.Count > 0)
+                        {
+                            this.WriteAlignedLine(streamWriter, lineWords, lineLength, maxLineLength);
                         }
                     }
                 }
             }
             catch (Exception ex)
             {
-                throw ex;
+                throw;
                 err = this.CatchException(null, ERROR_FILE);
             }
         }
@@ -322,6 +296,42 @@ namespace LAB
         #endregion
 
         #region PRIVATE METHODS
+
+        private string GetAlignedLine(List<string> lineWords, int lineLength, int maxLineLength)
+        {
+            int neededWhitespaces = maxLineLength - (lineLength - 1);
+            int extreNeededWhitespaces = 0;
+            int neededWhitespacesPerWord = 0;
+
+            if (lineWords.Count > 1)
+            {
+                extreNeededWhitespaces = neededWhitespaces % (lineWords.Count - 1);
+                neededWhitespacesPerWord = (neededWhitespaces - extreNeededWhitespaces) / (lineWords.Count - 1);
+            }
+
+            string alignedLine = lineWords[0] + " ";
+            for (int i = 1; i < lineWords.Count; i++)
+            {
+                string lineWord = new string(' ', neededWhitespacesPerWord) + lineWords[i];
+                if (extreNeededWhitespaces-- > 0) lineWord = " " + lineWord;
+
+                if (i == lineWords.Count - 1) alignedLine += lineWord;
+                else alignedLine += lineWord + " ";
+            }
+            return alignedLine;
+        }
+
+        private void WriteAlignedLine(StreamWriter streamWriter, List<string> lineWords, int lineLength, int maxLineLength)
+        {
+            if (lineLength - 1 > maxLineLength)
+            {
+                streamWriter.WriteLine(lineWords[0]);
+            }
+            else
+            {
+                streamWriter.WriteLine(this.GetAlignedLine(lineWords, lineLength, maxLineLength));
+            }
+        }
 
         /// <summary>
         /// Validates Filename
