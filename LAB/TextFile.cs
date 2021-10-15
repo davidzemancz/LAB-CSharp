@@ -198,68 +198,72 @@ namespace LAB
 		/// </summary>
 		/// <param name="err">Error text</param>
 		/// <returns>Filename</returns>
-		public void AlignContent(string outputFilename, int lineLength, out string err)
+		public void AlignContent(string outputFilename, int maxLineLength, out string err)
 		{
 			err = "";
-			List<string> currentLineWords = new List<string>();
-			int currentLineLength = 0;
+			List<string> lineWords = new List<string>();
+			int lineLengthWithouWhitespaces = 0;
 			try
 			{
 				if (this.ValidateFilename(out err))
 				{
 					using (StreamWriter streamWriter = new StreamWriter(outputFilename))
-					using (Reader streamReader = new Reader(this.Filename))
+					using (StreamReaderEx streamReader = new StreamReaderEx(this.Filename))
 					{
 						while (!streamReader.EndOfStream)
 						{
 							string word = streamReader.ReadWord();
 							int wordLength = word.Length;
-							
-							if (currentLineLength + wordLength >= lineLength)
+
+							int lineLengthWithWhitespaces = lineLengthWithouWhitespaces + lineWords.Count - 1 + 1 + wordLength;
+							if (lineLengthWithWhitespaces >= maxLineLength && lineWords.Count > 0)
 							{
-								if (currentLineWords.Count == 0)
-								{
-									currentLineWords.Add(word);
-									currentLineLength = wordLength;
+								lineLengthWithWhitespaces = lineLengthWithouWhitespaces + lineWords.Count - 1;
+
+								string newLine = "";
+								if (lineLengthWithWhitespaces > maxLineLength)
+                                {
+									Assert.IsTrue(lineWords.Count == 1);
+									newLine = lineWords[0];
 								}
                                 else
                                 {
-									currentLineLength--;
-								}
+									int neededWhitespaces = maxLineLength - lineLengthWithWhitespaces;
+									int extreNeededWhitespaces = 0;
+									int neededWhitespacesPerWord = 0;
+									
+									if (lineWords.Count > 1)
+                                    {
+										extreNeededWhitespaces = neededWhitespaces % (lineWords.Count - 1);
+										neededWhitespacesPerWord = (neededWhitespaces - extreNeededWhitespaces) / (lineWords.Count - 1);
+									}
 
-								string newLine = "";
+									newLine = lineWords[0] + " ";
+									for (int i = 1; i < lineWords.Count; i++)
+                                    {
+										string lineWord = new string(' ', neededWhitespacesPerWord) + lineWords[i];
+										if (extreNeededWhitespaces-- > 0) lineWord = " " + lineWord;
 
-								int currentLineWordsCount = currentLineWords.Count;
-								int whitespacesNeeded = lineLength - currentLineLength;
-								if (whitespacesNeeded > 0)
-								{
-									newLine = " ";
-									whitespacesNeeded--;
-								}
-								int whitespacesNeededExtra = whitespacesNeeded % currentLineWordsCount;
-								whitespacesNeeded = whitespacesNeeded - whitespacesNeededExtra;
-								int whitespacesNeededPerWord = whitespacesNeeded / currentLineWordsCount;
+										if (i == lineWords.Count - 1) newLine += lineWord;
+										else newLine += lineWord + " ";
 
-								foreach (string currentLineWord in currentLineWords)
-                                {
-									newLine += whitespacesNeededExtra-- > 0 ? 
-										(newLine == "" || newLine == " " ? "" : " ") + new string(' ', whitespacesNeededPerWord) + ' ' + currentLineWord
-										: (newLine == "" || newLine == " " ? "" : " ") + new string(' ', whitespacesNeededPerWord) + currentLineWord;
+									}
 								}
 								streamWriter.WriteLine(newLine);
 
-								currentLineWords.Clear();
-								currentLineLength = 0;
+								lineWords.Clear();
+								lineLengthWithouWhitespaces = 0;
 							}
 
-							currentLineWords.Add(word);
-							currentLineLength += wordLength + 1;
+							lineWords.Add(word);
+							lineLengthWithouWhitespaces += wordLength;
 						}
 					}
 				}
 			}
 			catch (Exception ex)
 			{
+				throw ex;
 				err = this.CatchException(null, ERROR_FILE);
 			}
 		}
