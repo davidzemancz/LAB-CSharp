@@ -25,15 +25,14 @@ namespace LAB
         /// </summary>
         public string Filename { get; set; }
 
-        /// <summary>
-        /// Chars separating individual words
-        /// </summary>
-        public static char[] WhiteChars { get; } = new[] { ' ', '\t', '\n' };
-
         #endregion
 
         #region FIELDS
 
+        /// <summary>
+        /// Chars separating individual words
+        /// </summary>
+        private readonly char[] WhiteChars = new[] { ' ', '\t', '\n' };
 
         #endregion
 
@@ -73,12 +72,12 @@ namespace LAB
         {
             switch (method)
             {
-                case MethodEnum.CountWords: 
+                case MethodEnum.CountWords:
                     return new string[] { "lab1a_testfile.txt" };
                 case MethodEnum.WordsFrequencies:
                     return new string[] { "lab1_testfile.txt" };
-                    case MethodEnum.AlignContent:
-                    return new string[] { "lab1_testfile2.txt", "lab1_testfile_alg.txt", "40" };
+                case MethodEnum.AlignContent:
+                    return new string[] { "lab1_testfile2.txt", "lab1_testfile_alg2.txt", "40" };
             }
             return new string[0];
         }
@@ -97,8 +96,8 @@ namespace LAB
             switch (method)
             {
                 case MethodEnum.CountWords:
-                    if (args.Length != 1) 
-                    { 
+                    if (args.Length != 1)
+                    {
                         ok = false;
                         err = ERROR_ARGUMENT;
                     }
@@ -144,7 +143,7 @@ namespace LAB
                         while (!streamReader.EndOfStream)
                         {
                             string line = streamReader.ReadLine().Trim();
-                            int lineWordsCount = line.Split(WhiteChars, StringSplitOptions.RemoveEmptyEntries).Length;
+                            int lineWordsCount = line.Split(this.WhiteChars, StringSplitOptions.RemoveEmptyEntries).Length;
                             wordsCount += lineWordsCount;
                         }
                     }
@@ -175,8 +174,8 @@ namespace LAB
                         while (!streamReader.EndOfStream)
                         {
                             string line = streamReader.ReadLine().Trim();
-                            string[] lineWords = line.Split(WhiteChars, StringSplitOptions.RemoveEmptyEntries);
-                            foreach (string lineWord  in lineWords)
+                            string[] lineWords = line.Split(this.WhiteChars, StringSplitOptions.RemoveEmptyEntries);
+                            foreach (string lineWord in lineWords)
                             {
                                 if (wordFrequencies.ContainsKey(lineWord))
                                     wordFrequencies[lineWord]++;
@@ -208,7 +207,7 @@ namespace LAB
             {
                 if (this.ValidateFilename(out err))
                 {
-                    using StreamWriter streamWriter = new StreamWriter(outputFilename);
+                    using (StreamWriter streamWriter = new StreamWriter(outputFilename))
                     using (StreamReaderEx streamReader = new StreamReaderEx(this.Filename))
                     {
                         streamWriter.NewLine = "\n";
@@ -220,7 +219,7 @@ namespace LAB
                             if ((lineLength + word.Length > maxLineLength && lineWords.Count > 0) || newParagraph)
                             {
                                 this.WriteLineToStream(streamWriter, lineWords, lineLength, maxLineLength, !newParagraph);
-                                lineWords = new List<string>();
+                                lineWords.Clear();
                                 lineLength = 0;
                             }
 
@@ -251,8 +250,8 @@ namespace LAB
         public static void Run(string[] args, MethodEnum method)
         {
             string err = "";
-            TextFile textFile = new TextFile(); 
-            
+            TextFile textFile = new TextFile();
+
             // Runs in VS
             if (Debugger.IsAttached && args?.Length == 0)
             {
@@ -277,11 +276,12 @@ namespace LAB
                         Dictionary<string, int> wordsFreq = textFile.WordsFrequencies(out err);
                         if (!string.IsNullOrEmpty(err)) Console.WriteLine(err);
                         else foreach (KeyValuePair<string, int> kvp in wordsFreq.OrderBy(kvp => kvp.Key))
-                        {
-                            Console.WriteLine($"{kvp.Key}: {kvp.Value}");
-                        }
+                            {
+                                Console.WriteLine($"{kvp.Key}: {kvp.Value}");
+                            }
                         break;
                     case MethodEnum.AlignContent:
+
                         textFile.AlignContent(args[1], int.Parse(args[2]), out err);
                         if (!string.IsNullOrEmpty(err)) Console.WriteLine(err);
                         break;
@@ -311,19 +311,18 @@ namespace LAB
 
             StringBuilder alignedLineSb = new StringBuilder();
             alignedLineSb.Append(lineWords[0]);
-            if (lineWords.Count > 1) alignedLineSb.Append(' ');
+            if (lineWords.Count > 1) alignedLineSb.Append(" ");
 
             for (int i = 1; i < lineWords.Count; i++)
             {
-                alignedLineSb.Append(' ', neededWhitespacesPerWord + ((extreNeededWhitespaces-- > 0) ? 1 : 0));
-                if (i == lineWords.Count - 1)
-                {
-                    alignedLineSb.Append(lineWords[i]);
-                }
+                string lineWord = new string(' ', neededWhitespacesPerWord) + lineWords[i];
+                if (extreNeededWhitespaces-- > 0) lineWord = " " + lineWord;
+
+                if (i == lineWords.Count - 1) alignedLineSb.Append(lineWord);
                 else
                 {
-                    alignedLineSb.Append(lineWords[i]);
-                    alignedLineSb.Append(' ');
+                    alignedLineSb.Append(lineWord);
+                    alignedLineSb.Append(" ");
                 }
             }
             return alignedLineSb.ToString();
@@ -339,39 +338,22 @@ namespace LAB
             {
                 if (align)
                 {
-                    int neededWhitespaces = maxLineLength - (lineLength - 1);
-                    int extreNeededWhitespaces = 0;
-                    int neededWhitespacesPerWord = 0;
-
-                    if (lineWords.Count > 1)
-                    {
-                        extreNeededWhitespaces = neededWhitespaces % (lineWords.Count - 1);
-                        neededWhitespacesPerWord = (neededWhitespaces - extreNeededWhitespaces) / (lineWords.Count - 1);
-                    }
-
-                    streamWriter.Write(lineWords[0]);
-                    if (lineWords.Count > 1) streamWriter.Write(" ");
-
-                    for (int i = 1; i < lineWords.Count; i++)
-                    {
-                        streamWriter.Write(new string(' ', neededWhitespacesPerWord + ((extreNeededWhitespaces-- > 0) ? 1 : 0)));
-                        if (i == lineWords.Count - 1) streamWriter.Write(lineWords[i] + streamWriter.NewLine);
-                        else
-                        {
-                            streamWriter.Write(lineWords[i] + " ");
-                        }
-                    }
+                    streamWriter.WriteLine(this.GetAlignedLine(lineWords, lineLength, maxLineLength));
                 }
                 else
                 {
+                    StringBuilder alignedLineSb = new StringBuilder();
                     for (int i = 0; i < lineWords.Count; i++)
                     {
-                        if (i == lineWords.Count - 1) streamWriter.Write(lineWords[i] + streamWriter.NewLine);
+                        string lineWord = lineWords[i];
+                        if (i == lineWords.Count - 1) alignedLineSb.Append(lineWord);
                         else
                         {
-                            streamWriter.Write(lineWords[i] + " ");
+                            alignedLineSb.Append(lineWord);
+                            alignedLineSb.Append(" ");
                         }
                     }
+                    streamWriter.WriteLine(alignedLineSb.ToString());
                 }
             }
         }
