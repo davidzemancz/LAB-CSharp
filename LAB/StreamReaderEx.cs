@@ -30,6 +30,7 @@ namespace LAB
                     else whitespacesOnly = false;
                     wordSb.Append(c);
                 }
+                if (this.EndOfStream) break;
             }
             return wordSb.ToString();
         }
