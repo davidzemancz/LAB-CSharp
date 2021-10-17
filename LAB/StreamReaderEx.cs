@@ -11,21 +11,27 @@ namespace LAB
     {
         public StreamReaderEx(string path) : base(path) { }
 
-        public string ReadWord()
+        public string ReadWord(out bool newParagraph)
         {
-            string word = null;
-            List<char> buffer = new List<char>();
-            while (buffer.Count == 0)
+            newParagraph = false;
+            bool whitespacesOnly = false;
+            StringBuilder wordSb = new StringBuilder();
+            while (wordSb.Length == 0)
             {
                 while (!this.EndOfStream)
                 {
                     char c = (char)this.Read();
-                    if (char.IsWhiteSpace(c)) break;
-                    buffer.Add(c);
+                    if (char.IsWhiteSpace(c))
+                    {
+                        if (c == '\n' && (whitespacesOnly || wordSb.Length == 0)) newParagraph = true;
+                        whitespacesOnly = true;
+                        break;
+                    }
+                    else whitespacesOnly = false;
+                    wordSb.Append(c);
                 }
             }
-            word = new string(buffer.ToArray());
-            return word;
+            return wordSb.ToString();
         }
     }
 }
