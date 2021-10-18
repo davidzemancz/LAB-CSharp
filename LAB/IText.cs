@@ -20,4 +20,11 @@ namespace LAB
 
         public string ReadLine(out bool newParagraph);
     }
+
+    public interface ITextWriter : IDisposable
+    {
+        public void WriteLine();
+
+        public void WriteLine(string line);
+    }
 }
