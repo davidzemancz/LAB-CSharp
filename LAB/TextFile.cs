@@ -77,7 +77,8 @@ namespace LAB
                 case MethodEnum.WordsFrequencies:
                     return new string[] { "lab1_testfile.txt" };
                 case MethodEnum.AlignContent:
-                    return new string[] { "lab1_testfile2.txt", "lab1_testfile_alg2.txt", "40" };
+                    string filename = "TextFile_test3" + ".txt";
+                    return new string[] { filename, "Aligned_" + filename, "40" };
             }
             return new string[0];
         }
