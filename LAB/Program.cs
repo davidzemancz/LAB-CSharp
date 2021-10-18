@@ -8,7 +8,7 @@ namespace LAB
     {
         static void Main(string[] args)
         {
-            TextFile.Run(args, TextFile.MethodEnum.AlignContent);
+            TextProcessor.Run(args, TextProcessor.MethodEnum.AlignContent);
         }
     }
 }

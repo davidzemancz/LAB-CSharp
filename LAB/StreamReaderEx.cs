@@ -7,9 +7,19 @@ using System.Threading.Tasks;
 
 namespace LAB
 {
-    public class StreamReaderEx : StreamReader
+    public class StreamReaderEx : StreamReader, ITextReader
     {
-        public StreamReaderEx(string path) : base(path) { }
+        public StreamReaderEx(string path, string newLine) : base(path) 
+        { 
+            this.NewLine = newLine;
+        }
+
+        public string NewLine { get; set; }
+
+        public string ReadWord()
+        {
+            return this.ReadWord(out bool newParagraph);
+        }
 
         public string ReadWord(out bool newParagraph)
         {
@@ -23,7 +33,7 @@ namespace LAB
                     char c = (char)this.Read();
                     if (char.IsWhiteSpace(c))
                     {
-                        if (c == '\n' && (whitespacesOnly || wordSb.Length == 0)) newParagraph = true;
+                        if (c == this.NewLine[0] && (whitespacesOnly || wordSb.Length == 0)) newParagraph = true;
                         whitespacesOnly = true;
                         break;
                     }
@@ -34,5 +44,11 @@ namespace LAB
             }
             return wordSb.ToString();
         }
+
+        public string ReadLine(out bool newParagraph)
+        {
+            throw new NotImplementedException();
+        }
+
     }
 }

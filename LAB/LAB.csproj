@@ -6,13 +6,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Update="TextFile_test1.txt">
+    <None Update="Tests\TextFile_test1.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="TextFile_test2.txt">
+    <None Update="Tests\TextFile_test2.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="TextFile_test3.txt">
+    <None Update="Tests\TextFile_test3.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
