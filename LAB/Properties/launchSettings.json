@@ -1,8 +1,7 @@
 {
   "profiles": {
     "LAB": {
-      "commandName": "Project",
-      "commandLineArgs": "ahoj Lucko"
+      "commandName": "Project"
     }
   }
 }
