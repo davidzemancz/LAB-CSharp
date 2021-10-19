@@ -9,12 +9,17 @@ namespace LAB
 {
     public class StreamReaderEx : StreamReader, ITextReader
     {
+        public string NewLine { get; set; }
+
+        public StreamReaderEx(string path) : base(path)
+        {
+
+        }
+
         public StreamReaderEx(string path, string newLine) : base(path) 
         { 
             this.NewLine = newLine;
         }
-
-        public string NewLine { get; set; }
 
         public string ReadWord()
         {

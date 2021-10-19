@@ -8,6 +8,8 @@ namespace LAB
 {
     public interface ITextReader : IDisposable
     {
+        public string NewLine { get; set; }
+
         public bool EndOfStream { get; }
 
         public int Read();
@@ -23,6 +25,8 @@ namespace LAB
 
     public interface ITextWriter : IDisposable
     {
+        public string NewLine { get; set; }
+
         public void WriteLine();
 
         public void WriteLine(string line);

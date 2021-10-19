@@ -9,10 +9,8 @@ namespace LAB
 {
     public class StreamWriterEx : StreamWriter, ITextWriter
     {
-        public StreamWriterEx(string path, string newLine) : base(path)
+        public StreamWriterEx(string path) : base(path)
         {
-           this.NewLine = newLine;
         }
-
     }
 }
