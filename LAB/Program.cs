@@ -23,7 +23,7 @@ namespace LAB
             int maxLineLength;
 
             // ----- Validate and prepare args -----
-            if (args.Length <= 3 || string.IsNullOrEmpty(args[0]) || string.IsNullOrEmpty(args[1]) || int.TryParse(args[2], out maxLineLength))
+            if (args.Length < 3 || string.IsNullOrEmpty(args[0]) || string.IsNullOrEmpty(args[1]) || !int.TryParse(args[2], out maxLineLength))
             {
                 Console.WriteLine(TextProcessor.ERROR_ARGUMENT);
                 return;
@@ -32,10 +32,17 @@ namespace LAB
             outputFile = args[1];
 
             // ----- Run text processor -----
-            using (TextProcessor textProcessor = new TextProcessor(new StreamReaderEx(inputFile), new StreamWriterEx(outputFile), TextProcessor.LF))
+            try
             {
-                textProcessor.AlignContent(maxLineLength, out err);
-                if (!string.IsNullOrEmpty(err)) Console.WriteLine(err);
+                using (TextProcessor textProcessor = new TextProcessor(new StreamReaderEx(inputFile), new StreamWriterEx(outputFile), TextProcessor.LF))
+                {
+                    textProcessor.AlignContent(maxLineLength, out err);
+                    if (!string.IsNullOrEmpty(err)) Console.WriteLine(err);
+                }
+            }
+            catch
+            {
+                Console.WriteLine(TextProcessor.ERROR_FILE);
             }
         }
     }
