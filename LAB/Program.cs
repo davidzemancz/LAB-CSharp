@@ -12,7 +12,7 @@ namespace LAB
         }
     }
 
-    internal class TextProcessorHelper
+    public class TextProcessorHelper
     {
         public static void RunAlignContent(string[] args)
         {
