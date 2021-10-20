@@ -2,6 +2,8 @@
 using System.Diagnostics;
 using System.IO;
 
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Tests")]
+
 namespace LAB
 {
     internal class Program
@@ -12,7 +14,7 @@ namespace LAB
         }
     }
 
-    public class TextProcessorHelper
+    internal class TextProcessorHelper
     {
         public static void RunAlignContent(string[] args)
         {
