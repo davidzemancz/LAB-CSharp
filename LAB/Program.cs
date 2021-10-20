@@ -23,7 +23,7 @@ namespace LAB
             int maxLineLength;
 
             // ----- Validate and prepare args -----
-            if (args.Length < 3 || string.IsNullOrEmpty(args[0]) || string.IsNullOrEmpty(args[1]) || !int.TryParse(args[2], out maxLineLength))
+            if (args.Length != 3 || string.IsNullOrEmpty(args[0]) || string.IsNullOrEmpty(args[1]) || !int.TryParse(args[2], out maxLineLength))
             {
                 Console.WriteLine(TextProcessor.ERROR_ARGUMENT);
                 return;
