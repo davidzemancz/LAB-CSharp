@@ -1,7 +1,8 @@
 {
   "profiles": {
     "LAB": {
-      "commandName": "Project"
+      "commandName": "Project",
+      "commandLineArgs": "--W \"false nebo true\""
     }
   }
 }
