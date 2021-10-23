@@ -13,7 +13,7 @@ namespace LAB.Tests
         [DataRow(new string[] { "fileIn.txt" })]
         [DataRow(new string[] { "fileIn.txt", "fileOut.txt" })]
         [DataRow(new string[] { "fileIn.txt", "fileOut.txt", "a" })]
-        public void ArgumentErrorTest(string[] args)
+        public void ArgumentErrorHelperTest(string[] args)
         {
             StringWriter writer = new StringWriter();
             Console.SetOut(writer);
@@ -27,7 +27,7 @@ namespace LAB.Tests
         }
 
         [TestMethod]
-        public void FileErrorTest()
+        public void FileErrorHelperTest()
         {
             StringWriter writer = new StringWriter();
             Console.SetOut(writer);

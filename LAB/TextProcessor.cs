@@ -25,19 +25,30 @@ namespace LAB
         #region PROPS
 
         /// <summary>
-        /// Full file name
+        /// Text reader
         /// </summary>
-        public string Name { get; set; }
+        public ITextReader Reader
+        {
+            get => this._reader;
+            set
+            {
+                this._reader = value;
+                if (this._reader != null) this._reader.NewLine = this.NewLine;
+            }
+        }
 
         /// <summary>
-        /// File reader
+        /// Text writer
         /// </summary>
-        public ITextReader Reader { get; set; }
-
-        /// <summary>
-        /// File writer
-        /// </summary>
-        public ITextWriter Writer { get; set; }
+        public ITextWriter Writer
+        {
+            get => this._writer;
+            set
+            {
+                this._writer = value;
+                if (this._writer != null) this._writer.NewLine = this.NewLine;
+            }
+        }
 
         /// <summary>
         /// New line character
@@ -53,13 +64,26 @@ namespace LAB
             }
         }
 
+        /// <summary>
+        /// White characters that separate words
+        /// </summary>
+        public char[] WhiteChars { get; set; }
+
         #endregion
 
         #region FIELDS
 
-        private readonly char[] WhiteChars = new[] { ' ', '\t', '\n', '\r' };
-
         private string _newLine;
+
+        private ITextReader _reader;
+
+        private ITextWriter _writer;
+
+        private List<string> _lineWordsBuffer;
+
+        private int _lineLength;
+
+        private bool _keepLineWords;
 
         #endregion
 
@@ -78,14 +102,25 @@ namespace LAB
 
         public TextProcessor()
         {
-
+            this.WhiteChars = new[] { ' ', '\t', '\n', '\r' };
         }
 
-        public TextProcessor(ITextReader reader, ITextWriter writer, string newLine)
+        public TextProcessor(ITextReader reader, ITextWriter writer, string newLine) : this()
         {
             this.Reader = reader;
             this.Writer = writer;
             this.NewLine = newLine;
+        }
+
+        public TextProcessor(ITextWriter writer, string newLine) : this()
+        {
+            this.Writer = writer;
+            this.NewLine = newLine;
+        }
+
+        public TextProcessor(ITextWriter writer, string newLine, bool keepState) : this(writer, newLine)
+        {
+            this._keepLineWords = keepState;
         }
 
         #endregion
@@ -153,11 +188,11 @@ namespace LAB
         /// </summary>
         /// <param name="err">Error text</param>
         /// <returns>Filename</returns>
-        public void AlignContent(int maxLineLength, out string err)
+        public void AlignContent(int maxLineLength, bool highlightSpaces, out string err)
         {
             err = "";
-            List<string> lineWords = new List<string>();
-            int lineLength = 0;
+            if (!this._keepLineWords || this._lineWordsBuffer == null) _lineWordsBuffer = new List<string>();
+            
             try
             {
                 while (!this.Reader.EndOfStream)
@@ -165,28 +200,39 @@ namespace LAB
                     string word = this.Reader.ReadWord(out bool newParagraph);
                     if (string.IsNullOrEmpty(word)) continue;
 
-                    if ((lineLength + word.Length > maxLineLength && lineWords.Count > 0) || newParagraph)
+                    if ((_lineLength + word.Length > maxLineLength && this._lineWordsBuffer.Count > 0) || newParagraph)
                     {
-                        this.WriteLine(lineWords, lineLength, maxLineLength, !newParagraph);
-                        lineWords.Clear();
-                        lineLength = 0;
+                        this.WriteLine(this._lineWordsBuffer, _lineLength, maxLineLength, !newParagraph);
+                        this._lineWordsBuffer.Clear();
+                        _lineLength = 0;
                     }
 
-                    if (newParagraph) this.Writer.WriteLine();
+                    if (newParagraph)
+                    {
+                        this.Writer.WriteLine();
+                    }
 
-                    lineWords.Add(word);
-                    lineLength += word.Length + 1;
+                    this._lineWordsBuffer.Add(word);
+                    _lineLength += word.Length + 1;
                 }
 
-                if (lineWords.Count > 0)
+                if (!this._keepLineWords && this._lineWordsBuffer.Count > 0)
                 {
-                    this.WriteLine(lineWords, lineLength, maxLineLength, false);
+                    this.WriteLine(this._lineWordsBuffer, _lineLength, maxLineLength, false);
                 }
             }
             catch (Exception ex)
             {
                 err = this.CatchException(null, ERROR_FILE);
             }
+        }
+
+        /// <summary>
+        /// Writes words in buffer to writer
+        /// </summary>
+        public void WriteLineWords()
+        {
+            if (this._lineWordsBuffer?.Any() ?? false) this.WriteLine(this._lineWordsBuffer, _lineLength, 0, false);
         }
 
         /// <summary>
