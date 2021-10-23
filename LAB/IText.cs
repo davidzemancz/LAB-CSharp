@@ -27,6 +27,8 @@ namespace LAB
     {
         public string NewLine { get; set; }
 
+        public void Write(string str);
+
         public void WriteLine();
 
         public void WriteLine(string line);

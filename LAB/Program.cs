@@ -11,7 +11,8 @@ namespace LAB
     {
         static void Main(string[] args)
         {
-            args = new string[] { @".\TestFiles\lab03\01.in", @".\TestFiles\lab03\01.in", @".\TestFiles\lab03\01.in", "alg_ex12.out", "17" };
+            //args = new string[] { "--highlight-spaces", @".\TestFiles\lab03\01.in", @".\TestFiles\lab03\01.in", @".\TestFiles\lab03\01.in", "alg_ex12.out", "17" };
+            //args = new string[] { "--highlight-spaces", @".\TestFiles\lab03\xx.in", @".\TestFiles\lab03\01.in", @".\TestFiles\lab03\xx.in", @".\TestFiles\lab03\xx.in", "alg_ex08.out", "80" };
 
             TextProcessorHelper.RunAlignContentMultipleFiles(args);
         }

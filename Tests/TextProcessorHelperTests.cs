@@ -6,14 +6,14 @@ using System.IO;
 namespace LAB.Tests
 {
     [TestClass]
-    public class TextProcessorTests
+    public class TextProcessorHelperTests
     {
         [TestMethod]
         [DataRow(new string[0])]
         [DataRow(new string[] { "fileIn.txt" })]
         [DataRow(new string[] { "fileIn.txt", "fileOut.txt" })]
         [DataRow(new string[] { "fileIn.txt", "fileOut.txt", "a" })]
-        public void ArgumentErrorHelperTest(string[] args)
+        public void ArgumentErrorTest(string[] args)
         {
             StringWriter writer = new StringWriter();
             Console.SetOut(writer);
@@ -27,7 +27,7 @@ namespace LAB.Tests
         }
 
         [TestMethod]
-        public void FileErrorHelperTest()
+        public void FileErrorTest()
         {
             StringWriter writer = new StringWriter();
             Console.SetOut(writer);

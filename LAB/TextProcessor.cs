@@ -20,8 +20,12 @@ namespace LAB
 
         public const string CR = "\r";
 
+        public const string HIGHLIGHT_NEWLINE = "<-";
+
+        public const string HIGHLIGHT_SPACE = ".";
+
         #endregion
-       
+
         #region PROPS
 
         /// <summary>
@@ -51,7 +55,7 @@ namespace LAB
         }
 
         /// <summary>
-        /// New line character
+        /// New line string
         /// </summary>
         public string NewLine
         {
@@ -63,6 +67,11 @@ namespace LAB
                 if (this.Reader != null) this.Reader.NewLine = value;
             }
         }
+
+        /// <summary>
+        /// Space string
+        /// </summary>
+        public string Space { get; set; }
 
         /// <summary>
         /// White characters that separate words
@@ -103,6 +112,8 @@ namespace LAB
         public TextProcessor()
         {
             this.WhiteChars = new[] { ' ', '\t', '\n', '\r' };
+            this.NewLine = Environment.NewLine;
+            this.Space = " ";
         }
 
         public TextProcessor(ITextReader reader, ITextWriter writer, string newLine) : this()
@@ -118,9 +129,9 @@ namespace LAB
             this.NewLine = newLine;
         }
 
-        public TextProcessor(ITextWriter writer, string newLine, bool keepState) : this(writer, newLine)
+        public TextProcessor(ITextWriter writer, string newLine, bool keepLineWords) : this(writer, newLine)
         {
-            this._keepLineWords = keepState;
+            this._keepLineWords = keepLineWords;
         }
 
         #endregion
@@ -188,11 +199,17 @@ namespace LAB
         /// </summary>
         /// <param name="err">Error text</param>
         /// <returns>Filename</returns>
-        public void AlignContent(int maxLineLength, bool highlightSpaces, out string err)
+        public void AlignContent(int maxLineLength, bool highlight, out string err)
         {
             err = "";
-            if (!this._keepLineWords || this._lineWordsBuffer == null) _lineWordsBuffer = new List<string>();
-            
+            if (!this._keepLineWords || this._lineWordsBuffer == null) this._lineWordsBuffer = new List<string>();
+
+            if (highlight)
+            {
+                this.Writer.NewLine = HIGHLIGHT_NEWLINE + this.NewLine;
+                this.Space = HIGHLIGHT_SPACE;
+            }
+
             try
             {
                 while (!this.Reader.EndOfStream)
@@ -202,7 +219,7 @@ namespace LAB
 
                     if ((_lineLength + word.Length > maxLineLength && this._lineWordsBuffer.Count > 0) || newParagraph)
                     {
-                        this.WriteLine(this._lineWordsBuffer, _lineLength, maxLineLength, !newParagraph);
+                        this.WriteLine(maxLineLength, !newParagraph);
                         this._lineWordsBuffer.Clear();
                         _lineLength = 0;
                     }
@@ -218,7 +235,7 @@ namespace LAB
 
                 if (!this._keepLineWords && this._lineWordsBuffer.Count > 0)
                 {
-                    this.WriteLine(this._lineWordsBuffer, _lineLength, maxLineLength, false);
+                    this.WriteLine(maxLineLength, false);
                 }
             }
             catch (Exception ex)
@@ -232,7 +249,7 @@ namespace LAB
         /// </summary>
         public void WriteLineWords()
         {
-            if (this._lineWordsBuffer?.Any() ?? false) this.WriteLine(this._lineWordsBuffer, _lineLength, 0, false);
+            if (this._lineWordsBuffer?.Any() ?? false) this.WriteLine( -1, false);
         }
 
         /// <summary>
@@ -255,32 +272,32 @@ namespace LAB
         /// <param name="lineLength">Lenght of line</param>
         /// <param name="maxLineLength">Desired length on line</param>
         /// <returns></returns>
-        private string AlignWordsToLine(List<string> lineWords, int lineLength, int maxLineLength)
+        private string AlignWordsToLine(int maxLineLength)
         {
-            int neededWhitespaces = maxLineLength - (lineLength - 1);
+            int neededWhitespaces = maxLineLength - (this._lineLength - 1);
             int extreNeededWhitespaces = 0;
             int neededWhitespacesPerWord = 0;
 
-            if (lineWords.Count > 1)
+            if (this._lineWordsBuffer.Count > 1)
             {
-                extreNeededWhitespaces = neededWhitespaces % (lineWords.Count - 1);
-                neededWhitespacesPerWord = (neededWhitespaces - extreNeededWhitespaces) / (lineWords.Count - 1);
+                extreNeededWhitespaces = neededWhitespaces % (this._lineWordsBuffer.Count - 1);
+                neededWhitespacesPerWord = (neededWhitespaces - extreNeededWhitespaces) / (this._lineWordsBuffer.Count - 1);
             }
 
             StringBuilder alignedLineSb = new StringBuilder();
-            alignedLineSb.Append(lineWords[0]);
-            if (lineWords.Count > 1) alignedLineSb.Append(" ");
+            alignedLineSb.Append(this._lineWordsBuffer[0]);
+            if (this._lineWordsBuffer.Count > 1) alignedLineSb.Append(this.Space);
 
-            for (int i = 1; i < lineWords.Count; i++)
+            for (int i = 1; i < this._lineWordsBuffer.Count; i++)
             {
-                string lineWord = new string(' ', neededWhitespacesPerWord) + lineWords[i];
-                if (extreNeededWhitespaces-- > 0) lineWord = " " + lineWord;
+                string lineWord = new string(this.Space[0], neededWhitespacesPerWord) + this._lineWordsBuffer[i];
+                if (extreNeededWhitespaces-- > 0) lineWord = this.Space + lineWord;
 
-                if (i == lineWords.Count - 1) alignedLineSb.Append(lineWord);
+                if (i == this._lineWordsBuffer.Count - 1) alignedLineSb.Append(lineWord);
                 else
                 {
                     alignedLineSb.Append(lineWord);
-                    alignedLineSb.Append(" ");
+                    alignedLineSb.Append(this.Space);
                 }
             }
             return alignedLineSb.ToString();
@@ -291,31 +308,31 @@ namespace LAB
         /// </summary>
         /// <param name="lineWords">List of words</param>
         /// <param name="lineLength">Lenght of line</param>
-        /// <param name="maxLineLength">Desired length on line</param>
+        /// <param name="maxLineLength">Desired length on line. Ignored if set to -1</param>
         /// <param name="align">Put extra whitespaces between words to align words to maxLineLength</param>
-        private void WriteLine(List<string> lineWords, int lineLength, int maxLineLength, bool align)
+        private void WriteLine(int maxLineLength, bool align)
         {
-            if (lineLength - 1 > maxLineLength)
+            if (this._lineLength - 1 > maxLineLength && maxLineLength > -1)
             {
-                this.Writer.WriteLine(lineWords[0]);
+                this.Writer.WriteLine(this._lineWordsBuffer[0]);
             }
             else
             {
                 if (align)
                 {
-                    this.Writer.WriteLine(this.AlignWordsToLine(lineWords, lineLength, maxLineLength));
+                    this.Writer.WriteLine(this.AlignWordsToLine(maxLineLength));
                 }
                 else
                 {
                     StringBuilder alignedLineSb = new StringBuilder();
-                    for (int i = 0; i < lineWords.Count; i++)
+                    for (int i = 0; i < this._lineWordsBuffer.Count; i++)
                     {
-                        string lineWord = lineWords[i];
-                        if (i == lineWords.Count - 1) alignedLineSb.Append(lineWord);
+                        string lineWord = this._lineWordsBuffer[i];
+                        if (i == this._lineWordsBuffer.Count - 1) alignedLineSb.Append(lineWord);
                         else
                         {
                             alignedLineSb.Append(lineWord);
-                            alignedLineSb.Append(" ");
+                            alignedLineSb.Append(this.Space);
                         }
                     }
                     this.Writer.WriteLine(alignedLineSb.ToString());

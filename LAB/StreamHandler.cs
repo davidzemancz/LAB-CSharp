@@ -56,4 +56,11 @@ namespace LAB
         }
 
     }
+
+    public class StreamWriterEx : StreamWriter, ITextWriter
+    {
+        public StreamWriterEx(string path) : base(path)
+        {
+        }
+    }
 }
