@@ -13,7 +13,7 @@ namespace LAB.Tests
         [DataRow(new string[] { "fileIn.txt" })]
         [DataRow(new string[] { "fileIn.txt", "fileOut.txt" })]
         [DataRow(new string[] { "fileIn.txt", "fileOut.txt", "a" })]
-        public void ArgumentErrorTest(string[] args)
+        public void OneFileArgumentErrorTest(string[] args)
         {
             StringWriter writer = new StringWriter();
             Console.SetOut(writer);
@@ -27,7 +27,7 @@ namespace LAB.Tests
         }
 
         [TestMethod]
-        public void FileErrorTest()
+        public void OneFileFileErrorTest()
         {
             StringWriter writer = new StringWriter();
             Console.SetOut(writer);
@@ -39,6 +39,26 @@ namespace LAB.Tests
             string firstLine = reader.ReadLine();
 
             Assert.AreEqual(TextProcessor.ERROR_FILE, firstLine);
+        }
+
+        [TestMethod]
+        [DataRow(new string[0])]
+        [DataRow(new string[] { "fileIn.txt" })]
+        [DataRow(new string[] { "fileIn.txt", "fileOut.txt" })]
+        [DataRow(new string[] { "fileIn.txt", "fileOut.txt", "a" })]
+        [DataRow(new string[] { "fileIn.txt", "fileIn.txt", "fileIn.txt", "", "4" })]
+        [DataRow(new string[] { "fileIn.txt", "fileIn.txt", "fileIn.txt", "fileOut.txt", "a" })]
+        public void MultipleFilesArgumentErrorTest(string[] args)
+        {
+            StringWriter writer = new StringWriter();
+            Console.SetOut(writer);
+            
+            TextProcessorHelper.RunAlignContentMultipleFiles(args);
+
+            StringReader reader = new StringReader(writer.ToString());
+            string firstLine = reader.ReadLine();
+
+            Assert.AreEqual(TextProcessor.ERROR_ARGUMENT, firstLine);
         }
     }
 }
