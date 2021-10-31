@@ -6,6 +6,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Bookstore\Bookstore.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="TestFiles\lab01\TextFile_test1.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
