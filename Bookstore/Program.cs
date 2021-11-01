@@ -51,7 +51,7 @@ namespace Bookstore
                     service = new CsvDataImporterService(inputReader, dataSource);
                     serviceResult = service.Run(line);
                 }
-                else if (lineParts[0] == Commands.GET)
+                else if (lineParts[0] == Commands.GET && lineParts.Length == 3)
                 {
                     service = new HtmlDataProviderService(outputWriter, dataSource);
                     serviceResult = service.Run(line);

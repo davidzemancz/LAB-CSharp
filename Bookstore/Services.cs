@@ -170,6 +170,10 @@ namespace Bookstore
                         throw new Exception("Invalid path");
                     }
                 }
+                else
+                {
+                    throw new Exception("Invalid path");
+                }
             }
             catch
             {
