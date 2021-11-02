@@ -82,6 +82,8 @@ namespace Bookstore
                     else if (lineParts[0] == "CART-ITEM")
                     {
                         CartItem cartItem = cartItemDataParser.Parse(line);
+
+                        if (!this.DataSource.ExistsBookId(cartItem.BookId)) throw new Exception($"Book with id {cartItem.BookId} does not exists");
                         this.DataSource.AddCartItem(cartItem);
                     }
                     else
@@ -124,11 +126,13 @@ namespace Bookstore
                 string[] parts = line.Split(' ');
                 
                 int customerId = int.Parse(parts[1]);
-                if (!this.DataSource.Customers.ContainsKey(customerId)) throw new Exception($"Customer with id {customerId} does not exists");
+                if (!this.DataSource.ExistsCustomerId(customerId)) throw new Exception($"Customer with id {customerId} does not exists");
                 Customer customer = this.DataSource.Customers[customerId];
 
                 string uri = parts[2];
-                string[] dataSourcePath = this.GetDataSourcePath(uri);
+                (string protocol, string adress, string[] dataSourcePath) = this.GetUriInfo(uri);
+                if (protocol != "http") throw new Exception("Invalid protocol");
+                else if (adress != "www.nezarka.net") throw new Exception("Invalid domain");
 
                 if (dataSourcePath[0] == "Books") // ../Books
                 {
@@ -138,7 +142,7 @@ namespace Bookstore
                     }
                     else if (dataSourcePath.Length == 3 && dataSourcePath[1] == "Detail" && int.TryParse(dataSourcePath[2], out int bookId)) // ../Books/Detail/_BookId_ ... detail of one book
                     {
-                        if (!this.DataSource.Books.ContainsKey(bookId)) throw new Exception($"Book with id {bookId} does not exists");
+                        if (!this.DataSource.ExistsBookId(bookId)) throw new Exception($"Book with id {bookId} does not exists");
                         Book book = this.DataSource.Books[bookId];
 
                         this.WriteBookDetail(customer, book);
@@ -157,11 +161,13 @@ namespace Bookstore
                     }
                     else if (dataSourcePath.Length == 3 && dataSourcePath[1] == "Add" && int.TryParse(dataSourcePath[2], out bookId)) // ../ShoppingCart/Add/_BookId_ ... add one book to customers shoppingcart
                     {
+                        if (!this.DataSource.ExistsBookId(bookId)) throw new Exception($"Book with id {bookId} does not exists");
                         this.DataSource.AddCartItem(new CartItem() { CustomerId = customer.Id, BookId = bookId, BookCount = 1 });
                         this.WriteShoppingCart(customer);
                     }
                     else if (dataSourcePath.Length == 3 && dataSourcePath[1] == "Remove" && int.TryParse(dataSourcePath[2], out bookId)) // ../ShoppingCart/Remove/_BookId_ ... remove one book customers from shoppingcart
                     {
+                        if (!this.DataSource.ExistsBookId(bookId)) throw new Exception($"Book with id {bookId} does not exists");
                         this.DataSource.RemoveCartItem(new CartItem() { CustomerId = customer.Id, BookId = bookId, BookCount = 1 });
                         this.WriteShoppingCart(customer);
                     }
@@ -177,7 +183,7 @@ namespace Bookstore
             }
             catch
             {
-                this.WriteInvalidRequest();
+                WriteInvalidRequest(this.OutputWriter);
             }
 
             return result;
@@ -186,31 +192,31 @@ namespace Bookstore
         /// <summary>
         /// Writes invalid request info in HTML format via Output writer
         /// </summary>
-        public void WriteInvalidRequest()
+        public static void WriteInvalidRequest(IOutputWriter outputWriter)
         {
-            this.OutputWriter.WriteLine("<!DOCTYPE html>");
-            this.OutputWriter.WriteLine("<html lang=\"en\" xmlns=\"http://www.w3.org/1999/xhtml\">");
-            this.OutputWriter.WriteLine("<head>");
-            this.OutputWriter.WriteLine("	<meta charset=\"utf-8\" />");
-            this.OutputWriter.WriteLine("	<title>Nezarka.net: Online Shopping for Books</title>");
-            this.OutputWriter.WriteLine("</head>");
-            this.OutputWriter.WriteLine("<body>");
-            this.OutputWriter.WriteLine("<p>Invalid request.</p>");
-            this.OutputWriter.WriteLine("</body>");
-            this.OutputWriter.WriteLine("</html>");
+            outputWriter.WriteLine("<!DOCTYPE html>");
+            outputWriter.WriteLine("<html lang=\"en\" xmlns=\"http://www.w3.org/1999/xhtml\">");
+            outputWriter.WriteLine("<head>");
+            outputWriter.WriteLine("	<meta charset=\"utf-8\" />");
+            outputWriter.WriteLine("	<title>Nezarka.net: Online Shopping for Books</title>");
+            outputWriter.WriteLine("</head>");
+            outputWriter.WriteLine("<body>");
+            outputWriter.WriteLine("<p>Invalid request.</p>");
+            outputWriter.WriteLine("</body>");
+            outputWriter.WriteLine("</html>");
         }
 
         /// <summary>
         /// Returns data source path from uri
         /// </summary>
         /// <param name="uri">Uri</param>
-        private string[] GetDataSourcePath(string uri)
+        private (string adress, string protocol, string[]) GetUriInfo(string uri)
         {
             string[] uriArr = uri.Split('/');
             int uriPathOffset = 3;
             string[] dataSourcePath = new string[uriArr.Length - uriPathOffset];
             Array.Copy(uriArr, uriPathOffset, dataSourcePath, 0, uriArr.Length - uriPathOffset);
-            return dataSourcePath;
+            return (uriArr[0].Substring(0, uriArr[0].Length - 1), uriArr[2], dataSourcePath);
         }
 
         /// <summary>

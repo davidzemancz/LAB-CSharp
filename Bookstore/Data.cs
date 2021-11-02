@@ -23,6 +23,11 @@ namespace Bookstore
 
         public void RemoveCartItem(CartItem cartItem);
 
+        public bool ExistsCustomerId(int id);
+
+        public bool ExistsBookId(int id);
+
+
     }
 
     public class LocalDataSource : IDataSource
@@ -49,16 +54,22 @@ namespace Bookstore
 
         public void AddCartItem(CartItem cartItem)
         {
-            if (!this.Customers.ContainsKey(cartItem.CustomerId)) throw new Exception($"Customer with id {cartItem.CustomerId} does not exists.");
-            if (!this.Books.ContainsKey(cartItem.BookId)) throw new Exception($"Book with id {cartItem.BookId} does not exists.");
             this.Customers[cartItem.CustomerId].AddCartItem(cartItem);
         }
 
         public void RemoveCartItem(CartItem cartItem)
         {
-            if (!this.Customers.ContainsKey(cartItem.CustomerId)) throw new Exception($"Customer with id {cartItem.CustomerId} does not exists.");
-            if (!this.Books.ContainsKey(cartItem.BookId)) throw new Exception($"Book with id {cartItem.BookId} does not exists.");
             this.Customers[cartItem.CustomerId].RemoveCartItem(cartItem);
+        }
+
+        public bool ExistsCustomerId(int id)
+        {
+            return this.Customers.ContainsKey(id);
+        }
+
+        public bool ExistsBookId(int id)
+        {
+            return this.Books.ContainsKey(id);
         }
     }
 
