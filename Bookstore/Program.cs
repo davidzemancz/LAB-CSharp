@@ -35,10 +35,8 @@ namespace Bookstore
                 outputWriter = new ConsoleOutputWriter();
             }
 
-            int i = 0;
             while (true)
             {
-                i++;
                 string line = inputReader.ReadLine();
                 if (line == null) break;
                 string[] lineParts = line.Split(' ');
