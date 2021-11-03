@@ -141,7 +141,8 @@ namespace LAB
                 if (!string.IsNullOrEmpty(this.Name))
                 {
                     if (this.Name.StartsWith("--")) return TypeEnum.OptionLong;
-                    if (this.Name.StartsWith("-")) return TypeEnum.Option;
+                    else if (this.Name.StartsWith("-")) return TypeEnum.Option;
+                    else return TypeEnum.Operand;
                 }
                 return TypeEnum.None;
             }
@@ -152,6 +153,7 @@ namespace LAB
             None = 0,
             Option = 1,
             OptionLong = 2,
+            Operand = 3,
         }
 
         public object Clone()

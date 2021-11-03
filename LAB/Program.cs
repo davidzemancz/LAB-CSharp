@@ -2,7 +2,6 @@
 using System.Diagnostics;
 using System.IO;
 using System.Collections.Generic;
-using Bookstore;
 
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Tests")]
 
@@ -12,9 +11,33 @@ namespace LAB
     {
         static void Main(string[] args)
         {
+            const string error = "Error!";
+
+            try
+            {
+                int a = 0, b = 0;
+
+                string line = Console.ReadLine();
+                if (line == null) throw new Exception("No input");
+                else if (!int.TryParse(line, out a)) throw new Exception("Invalid input");
+                else if (a < 0) throw new Exception("Input less than zero");
+
+                line = Console.ReadLine();
+                if (line == null) throw new Exception("No input");
+                else if (!int.TryParse(line, out b)) throw new Exception("Invalid input");
+                else if (b < 0) throw new Exception("Input less than zero");
+
+                int result = a - b;
+
+                Console.WriteLine("Result: {0}", result);
+            }
+            catch (Exception)
+            {
+                Console.WriteLine(error);
+            }
         }
     }
-
+    /*
     internal class TextProcessorHelper
     {
         public static void RunAlignContent(string[] args)
@@ -102,4 +125,5 @@ namespace LAB
 
         }
     }
+    */
 }

@@ -66,7 +66,8 @@ namespace Bookstore
                 while (true)
                 {
                     line = this.InputReader.ReadLine();
-                    if (line == null || line == Program.Commands.DATA_END) break;
+                    if (line == null) throw new Exception("Data loading failed");
+                    else if (line == Program.Commands.DATA_END) break;
                     string[] lineParts = line.Split(';');
 
                     if (lineParts[0] == "BOOK")
@@ -83,6 +84,7 @@ namespace Bookstore
                     {
                         CartItem cartItem = cartItemDataParser.Parse(line);
 
+                        if (!this.DataSource.ExistsCustomerId(cartItem.CustomerId)) throw new Exception($"Customer with id {cartItem.CustomerId} does not exists");
                         if (!this.DataSource.ExistsBookId(cartItem.BookId)) throw new Exception($"Book with id {cartItem.BookId} does not exists");
                         this.DataSource.AddCartItem(cartItem);
                     }
@@ -129,52 +131,37 @@ namespace Bookstore
                 if (!this.DataSource.ExistsCustomerId(customerId)) throw new Exception($"Customer with id {customerId} does not exists");
                 Customer customer = this.DataSource.Customers[customerId];
 
-                string uri = parts[2];
-                (string protocol, string adress, string[] dataSourcePath) = this.GetUriInfo(uri);
-                if (protocol != "http") throw new Exception("Invalid protocol");
-                else if (adress != "www.nezarka.net") throw new Exception("Invalid domain");
+                int bookId;
+                Uri uri = new Uri(parts[2]);
 
-                if (dataSourcePath[0] == "Books") // ../Books
+                if (uri.Host != "www.nezarka.net") throw new Exception("Invalid uri");
+                else if (uri.Segments.Length > 4) throw new Exception("Invalid uri");
+
+                if (uri.Segments[1] == "Books")
                 {
-                    if (dataSourcePath.Length == 1) // ../Books ... list of all books
-                    {
-                        this.WriteBooks(customer);
-                    }
-                    else if (dataSourcePath.Length == 3 && dataSourcePath[1] == "Detail" && int.TryParse(dataSourcePath[2], out int bookId)) // ../Books/Detail/_BookId_ ... detail of one book
-                    {
-                        if (!this.DataSource.ExistsBookId(bookId)) throw new Exception($"Book with id {bookId} does not exists");
-                        Book book = this.DataSource.Books[bookId];
-
-                        this.WriteBookDetail(customer, book);
-                    }
-                    else
-                    {
-                        throw new Exception("Invalid path");
-                    }
+                    this.WriteBooks(customer);
                 }
-                else if (dataSourcePath[0] == "ShoppingCart") // ../ShoppingCart
+                else if (uri.Segments[1] == "Books/" && uri.Segments[2] == "Detail/" && int.TryParse(uri.Segments[3], out bookId))
                 {
-                    int bookId;
-                    if (dataSourcePath.Length == 1) // ../ShoppingCart ... customers shoppingcart
-                    {
-                        this.WriteShoppingCart(customer);
-                    }
-                    else if (dataSourcePath.Length == 3 && dataSourcePath[1] == "Add" && int.TryParse(dataSourcePath[2], out bookId)) // ../ShoppingCart/Add/_BookId_ ... add one book to customers shoppingcart
-                    {
-                        if (!this.DataSource.ExistsBookId(bookId)) throw new Exception($"Book with id {bookId} does not exists");
-                        this.DataSource.AddCartItem(new CartItem() { CustomerId = customer.Id, BookId = bookId, BookCount = 1 });
-                        this.WriteShoppingCart(customer);
-                    }
-                    else if (dataSourcePath.Length == 3 && dataSourcePath[1] == "Remove" && int.TryParse(dataSourcePath[2], out bookId)) // ../ShoppingCart/Remove/_BookId_ ... remove one book customers from shoppingcart
-                    {
-                        if (!this.DataSource.ExistsBookId(bookId)) throw new Exception($"Book with id {bookId} does not exists");
-                        this.DataSource.RemoveCartItem(new CartItem() { CustomerId = customer.Id, BookId = bookId, BookCount = 1 });
-                        this.WriteShoppingCart(customer);
-                    }
-                    else
-                    {
-                        throw new Exception("Invalid path");
-                    }
+                    if (!this.DataSource.ExistsBookId(bookId)) throw new Exception($"Book with id {bookId} does not exists");
+                    Book book = this.DataSource.Books[bookId];
+                    this.WriteBookDetail(customer, book);
+                }
+                else if (uri.Segments[1] == "ShoppingCart")
+                {
+                    this.WriteShoppingCart(customer);
+                }
+                else if (uri.Segments[1] == "ShoppingCart/" && uri.Segments[2] == "Add/" && int.TryParse(uri.Segments[3], out bookId)) 
+                {
+                    if (!this.DataSource.ExistsBookId(bookId)) throw new Exception($"Book with id {bookId} does not exists");
+                    this.DataSource.AddCartItem(new CartItem() { CustomerId = customer.Id, BookId = bookId, BookCount = 1 });
+                    this.WriteShoppingCart(customer);
+                }
+                else if (uri.Segments[1] == "ShoppingCart/" && uri.Segments[2] == "Remove/" && int.TryParse(uri.Segments[3], out bookId)) 
+                {
+                    if (!this.DataSource.ExistsBookId(bookId)) throw new Exception($"Book with id {bookId} does not exists");
+                    this.DataSource.RemoveCartItem(new CartItem() { CustomerId = customer.Id, BookId = bookId, BookCount = 1 });
+                    this.WriteShoppingCart(customer);
                 }
                 else
                 {
