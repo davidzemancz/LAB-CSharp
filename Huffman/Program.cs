@@ -11,7 +11,7 @@ namespace Huffman
             bool test = true;
             if (test)
             {
-               args = new string[] { @"C:\Users\david.zeman\Downloads\Model.cs" };
+               args = new string[] { @"C:\Users\david.zeman\Downloads\test.in" };
             }
 
             if (ValidateArguments(args))
@@ -24,11 +24,13 @@ namespace Huffman
                     {
                         while (true)
                         {
-                            int i = fileStream.ReadByte();
-                            if (i == -1) break;
-                            frequencies[(byte)i] += 1;
+                            int b = fileStream.ReadByte();
+                            if (b == -1) break;
+                            frequencies[(byte)b] += 1;
                         }
                     }
+                    Array.Sort(frequencies);
+                    WriteFrequencies(frequencies);
                 }
                 catch
                 {
@@ -54,6 +56,22 @@ namespace Huffman
                 return false;
             }
             return true;
+        }
+
+        /// <summary>
+        /// Writes array to standart output
+        /// </summary>
+        static void WriteFrequencies(long[] frequencies)
+        {
+            Console.Write("[");
+            for (int b = 0; b < frequencies.Length; b++)
+            {
+                if(frequencies[b] > 0)
+                {
+                    Console.Write($" *{b}:{frequencies[b]} ");
+                }
+            }
+            Console.WriteLine("]");
         }
     }
 }
