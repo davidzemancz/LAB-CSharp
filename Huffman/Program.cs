@@ -11,17 +11,20 @@ namespace Huffman
         {
             // IO
             IInputReader inputReader = null;
-            IOutputWriter outputWriter = new ConsoleOutputWriter(); ;
+            IOutputWriter outputWriterFile = null;
+            IOutputWriter outputWriterConsole = new ConsoleOutputWriter();
 
             if (args != null && args.Length == 1)
             {
                 // Read args
-                string filename = args[0];
+                string inFilename = args[0];
+                string outFilename = inFilename + ".huff";
 
                 try
                 {
                     // IO
-                    inputReader = new FileInputReader(new StreamReader(filename));
+                    inputReader = new FileInputReader(new StreamReader(inFilename));
+                    outputWriterFile = new FileOutputWriter(new StreamWriter(outFilename));
 
                     // Count frequencies
                     long[] frequencies = new long[byte.MaxValue + 1];
@@ -39,22 +42,22 @@ namespace Huffman
                     // Write tree to output
                     if (tree.Root != null)
                     {
-                       outputWriter.WriteLine(tree.ToString());
+                        outputWriterFile.WriteLine(tree.ToString());
                     }
                 }
                 catch
                 {
-                    outputWriter.WriteLine("File Error");
+                    outputWriterConsole.WriteLine("File Error");
                 }
                 finally
                 {
                     if (inputReader is IDisposable disposable1) disposable1.Dispose();
-                    if (outputWriter is IDisposable disposable2) disposable2.Dispose();
+                    if (outputWriterFile is IDisposable disposable2) disposable2.Dispose();
                 }
             }
             else
             {
-                outputWriter.WriteLine("Argument Error");
+                outputWriterConsole.WriteLine("Argument Error");
             }
         }
     }

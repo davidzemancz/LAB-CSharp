@@ -19,6 +19,23 @@ namespace Huffman
 
         public bool IsLeaf => this.Left == null && this.Right == null;
 
+        public byte[] ToBytes()
+        {
+            byte[] bytes = new byte[8];
+
+            if (this.IsLeaf)
+            {
+                
+            }
+            else
+            {
+                // bit[0] = 0
+                long f = this.Frequency & 0;
+            }
+
+            return bytes.Concat(this.Left.ToBytes()).Concat(this.Right.ToBytes()).ToArray();
+        }
+
         public override string ToString()
         {
             if (this.IsLeaf) return $"*{this.Byte}:{this.Frequency}";
@@ -76,9 +93,30 @@ namespace Huffman
             else this.Root = forest[0].Root;
         }
 
+        public byte[] ToBytes()
+        {
+            List<byte> bytes = new List<byte>();
+
+            bytes.AddRange(this.HeaderBytes());
+            bytes.AddRange(this.Root.ToBytes());
+            bytes.AddRange(this.FooterBytes());
+
+            return bytes.ToArray();
+        }
+
         public override string ToString()
         {
             return this.Root?.ToString();
+        }
+
+        private byte[] HeaderBytes()
+        {
+            return new byte[] { 0x7B, 0x68, 0x75, 0x7C, 0x6D, 0x7D, 0x66, 0x66 };
+        }
+
+        private byte[] FooterBytes()
+        {
+            return new byte[] { 0, 0, 0, 0, 0, 0, 0, 0 };
         }
 
         public class RootFrequencyByteComparer : IComparer<HuffmanBinaryTree>

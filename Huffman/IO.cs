@@ -62,6 +62,8 @@ namespace Huffman
     public interface IOutputWriter
     {
         public void WriteLine(string line);
+
+        public void WriteByte(byte b);
     }
 
     public class ConsoleOutputWriter : IOutputWriter
@@ -69,6 +71,11 @@ namespace Huffman
         public void WriteLine(string line)
         {
             Console.WriteLine(line);
+        }
+
+        public void WriteByte(byte b)
+        {
+            Console.Write(b);
         }
     }
 
@@ -84,6 +91,11 @@ namespace Huffman
         public void WriteLine(string line)
         {
             this._streamWriter.WriteLine(line);
+        }
+
+        public void WriteByte(byte b)
+        {
+            this._streamWriter.Write(b);
         }
 
         public void Dispose()
