@@ -9,8 +9,14 @@ namespace Huffman
 {
     public class HuffmanBinaryTreeNode
     {
+        /// <summary>
+        /// Left child node
+        /// </summary>
         public HuffmanBinaryTreeNode Left { get; set; }
 
+        /// <summary>
+        /// Right child node
+        /// </summary>
         public HuffmanBinaryTreeNode Right { get; set; }
 
         /// <summary>

@@ -10,11 +10,6 @@ namespace Huffman
     {
         static void Main(string[] args)
         {
-            /*/
-            Test();
-            return;
-            /**/
-
             // IO
             IInputReader inputFileReader = null;
             IOutputWriter outputWriterFile = null;
