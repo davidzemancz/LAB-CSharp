@@ -95,7 +95,7 @@ namespace Huffman
 
         public void WriteByte(byte b)
         {
-            this._streamWriter.Write(b);
+            this._streamWriter.BaseStream.WriteByte(b);
         }
 
         public void Dispose()

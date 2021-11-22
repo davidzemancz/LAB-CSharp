@@ -2,7 +2,7 @@
   "profiles": {
     "Huffman": {
       "commandName": "Project",
-      "commandLineArgs": "\"C:\\Users\\david.zeman\\Downloads\\huffman-data\\binary.in\""
+      "commandLineArgs": "\"C:\\Users\\david.zeman\\Downloads\\data\\simple4.in\""
     }
   }
 }
