@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Excel": {
+      "commandName": "Project",
+      "commandLineArgs": "C:\\Users\\david.zeman\\Downloads\\sample.sheet C:\\Users\\david.zeman\\Downloads\\sample.eval"
+    }
+  }
+}
