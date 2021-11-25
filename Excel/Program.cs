@@ -7,12 +7,15 @@ namespace Excel
     {
         static void Main(string[] args)
         {
+            Context context = new Context();
+
             IOutputWriter outputWriterConsole = new ConsoleOutputWriter();
 
             if (args != null && args.Length == 2)
             {
                 // Read args
                 string inFilename = args[0];
+                string inFilenameShort = Path.GetFileNameWithoutExtension(inFilename);
                 string outFilename = args[1];
 
                 try
@@ -22,9 +25,17 @@ namespace Excel
                     IOutputWriter outputWriterFile = new FileOutputWriter(outFilename);
                     ExcelIO excelIO = new ExcelIO(inputReaderFile, outputWriterFile);
 
+                    // Read sheet from file
                     Sheet sheet = excelIO.ReadSheet();
+                    sheet.Name = inFilenameShort;
 
-                    foreach(Cell cell in sheet.Cells)
+                    // Add sheet to context
+                    context.Sheets.Add(sheet.Name, sheet);
+
+
+
+                    // Print cells for DEBUGGING
+                    foreach (Cell cell in sheet.Cells)
                     {
                         Console.WriteLine($"{cell.Adress} = {cell.Value}");
                     }

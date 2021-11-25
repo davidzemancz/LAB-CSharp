@@ -7,6 +7,20 @@ using System.Threading.Tasks;
 
 namespace Excel
 {
+
+    /// <summary>
+    /// Excel application context
+    /// </summary>
+    public class Context
+    {
+        public Dictionary<string, Sheet> Sheets { get; }
+
+        public Context()
+        {
+            Sheets = new Dictionary<string, Sheet>();
+        }
+    }
+
     /// <summary>
     /// Sheet with cells
     /// </summary>
@@ -133,6 +147,15 @@ namespace Excel
 
         #endregion
 
+        #region PUBLIC METHODS
+
+        public void Evaluate(Context context)
+        {
+
+        }
+
+        #endregion
+
         #region ErrorTypeEnum
 
         public enum ErrorTypeEnum
@@ -163,13 +186,14 @@ namespace Excel
     }
 
     /// <summary>
-    /// Represents adress in sheet
+    /// Represents adress
     /// </summary>
     public struct Adress
     {
         public uint Row { get; }
 
         public uint Column { get; }
+
 
         public Adress(uint row, uint column)
         {
