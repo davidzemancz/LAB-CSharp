@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Diagnostics;
 
 namespace Excel
 {
@@ -7,6 +8,9 @@ namespace Excel
     {
         static void Main(string[] args)
         {
+            Stopwatch sw = Stopwatch.StartNew();
+            sw.Start();
+
             Context context = new Context();
 
             IOutputWriter outputWriterConsole = new ConsoleOutputWriter();
@@ -38,7 +42,7 @@ namespace Excel
                         cell.Evaluate(context);
 
                         // Print cells for DEBUGGING
-                        Console.WriteLine($"{cell.Adress} = {cell.Value}");
+                        //Console.WriteLine($"{cell.Adress} = {cell.Value}");
                     }
 
                     // Write sheet to file
@@ -54,6 +58,9 @@ namespace Excel
             {
                 outputWriterConsole.WriteLine("Argument Error");
             }
+
+            sw.Stop();
+            Console.WriteLine($"Elapsed: {sw.Elapsed}");
         }
     }
 }

@@ -64,18 +64,6 @@ namespace Excel
         protected Dictionary<ulong, Cell> Cells { get; }
 
         /// <summary>
-        /// Get or set cell by row index and column index
-        /// </summary>
-        /// <param name="row">Row index</param>
-        /// <param name="column">Column index</param>
-        /// <returns>Cell reference</returns>
-        public Cell this[uint row, uint column]
-        {
-            get => Cells[Adress.GetId(row, column)];
-            set => Cells[Adress.GetId(row, column)] = value;
-        }
-
-        /// <summary>
         /// Get or set cell by adress
         /// </summary>
         /// <param name="adress">Adress</param>
