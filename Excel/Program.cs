@@ -30,15 +30,19 @@ namespace Excel
                     sheet.Name = inFilenameShort;
 
                     // Add sheet to context
-                    context.Sheets.Add(sheet.Name, sheet);
+                    context.AddSheet(sheet);
 
-
-
-                    // Print cells for DEBUGGING
+                    // Evaluate cell values in context
                     foreach (Cell cell in sheet.Cells)
                     {
+                        cell.Evaluate(context);
+
+                        // Print cells for DEBUGGING
                         Console.WriteLine($"{cell.Adress} = {cell.Value}");
                     }
+
+                    // Write sheet to file
+                    excelIO.WriteSheet(sheet);
                 }
                 catch
                 {

@@ -45,5 +45,38 @@ namespace Excel
             }
             return sheet;
         }
+
+        public void WriteSheet(Sheet sheet)
+        {
+            this.OutputWriter.Open();
+            using (var writer = this.OutputWriter)
+            {
+                int lineIndex = 0;
+                StringBuilder lineBuilder = new StringBuilder();
+                foreach (var cell in sheet.Cells)
+                {
+                    if (cell.Adress.Row > lineIndex)
+                    {
+                        // Remove last space
+                        if (lineBuilder.Length > 0) lineBuilder.Remove(lineBuilder.Length - 1, 1);
+
+                        lineIndex++;
+                        writer.WriteLine(lineBuilder.ToString());
+
+                        lineBuilder.Clear();
+                    }
+                    
+                    lineBuilder.Append(cell.Value);
+                    lineBuilder.Append(' ');
+                }
+
+                if (lineBuilder.Length > 0)
+                {
+                    lineBuilder.Remove(lineBuilder.Length - 2, 1);
+                    writer.WriteLine(lineBuilder.ToString());
+                }
+
+            }
+        }
     }
 }
