@@ -213,7 +213,6 @@ namespace Excel
 
                             if (cell1 != null && cell2 != null)
                             {
-
                                 // Evaluate cell1
                                 if (!cell1.IsEvaluated) cell1.Evaluate(context);
                                 if (cell1.IsError)
@@ -287,7 +286,7 @@ namespace Excel
                             }
                             else
                             {
-                                ErrorType = ErrorTypeEnum.Error;
+                                ErrorType = ErrorTypeEnum.InvalidFormula;
                             }
                         }
                         else
