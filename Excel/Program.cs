@@ -8,10 +8,6 @@ namespace Excel
     {
         static void Main(string[] args)
         {
-
-            Stopwatch sw = Stopwatch.StartNew();
-            sw.Start();
-
             Context context = new Context();
 
             IOutputWriter outputWriterConsole = new ConsoleOutputWriter();
@@ -59,9 +55,6 @@ namespace Excel
             {
                 outputWriterConsole.WriteLine("Argument Error");
             }
-
-            sw.Stop();
-            Console.WriteLine($"Elapsed: {sw.Elapsed}");
         }
     }
 }
