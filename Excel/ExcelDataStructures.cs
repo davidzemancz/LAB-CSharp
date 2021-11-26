@@ -29,7 +29,7 @@ namespace Excel
         /// </summary>
         /// <param name="adress">Cell adress</param>
         /// <returns>Cell or null if cell does not exists</returns>
-        public Cell GetCell(Adress adress)
+        public Cell GetCell(string adress)
         {
             Sheet sheet = _sheets.FirstOrDefault().Value;
             return sheet?.Cells?.Exists(adress) ?? false ? sheet.Cells[adress] : null;
@@ -61,32 +61,27 @@ namespace Excel
     /// </summary>
     public class CellCollection : IEnumerable<Cell>
     {
-        protected Dictionary<ulong, Cell> Cells { get; }
+        protected Dictionary<ulong, Cell> CellsById { get; }
+
+        protected Dictionary<string, Cell> CellsByString { get; }
+
 
         /// <summary>
         /// Get or set cell by adress
         /// </summary>
         /// <param name="adress">Adress</param>
         /// <returns></returns>
-        public Cell this[Adress adress]
+        public Cell this[string adress]
         {
-            get => Cells[adress.GetId()];
-            set => Cells[adress.GetId()] = value;
+            get => CellsByString[adress];
         }
 
         public CellCollection()
         {
-            this.Cells = new Dictionary<ulong, Cell>();
+            this.CellsById = new Dictionary<ulong, Cell>();
+            this.CellsByString = new Dictionary<string, Cell>();
         }
 
-        /// <summary>
-        /// Gets first cell in sheet
-        /// </summary>
-        /// <returns>First cell in sheet or null if not exists</returns>
-        public Cell First()
-        {
-            return Cells.FirstOrDefault().Value;
-        }
 
         /// <summary>
         /// Adds new cell to collection.
@@ -94,25 +89,8 @@ namespace Excel
         /// <param name="cell">Cell</param>
         public void Add(Cell cell)
         {
-            Cells.Add(cell.Adress.GetId(), cell);
-        }
-
-        /// <summary>
-        /// Add new cell to collection or updates it, if it already exists.
-        /// </summary>
-        /// <param name="cell">Cell</param>
-        public void AddOrUpdate(Cell cell)
-        {
-            Cells[cell.Adress.GetId()] = cell;
-        }
-
-        /// <summary>
-        /// Remove cell from collection if exists.
-        /// </summary>
-        /// <param name="cell">Cell</param>
-        public void Remove(Cell cell)
-        {
-            Cells.Remove(cell.Adress.GetId());
+            CellsById[cell.Adress.ToUlong()] = cell;
+            CellsByString[cell.Adress.ToString()] = cell;
         }
 
         /// <summary>
@@ -120,14 +98,14 @@ namespace Excel
         /// </summary>
         /// <param name="cell"></param>
         /// <returns>True if cell exists in collection, otherwise false.</returns>
-        public bool Exists(Adress adress)
+        public bool Exists(string adress)
         {
-            return Cells.ContainsKey(adress.GetId());
+            return CellsByString.ContainsKey(adress);
         }
 
         public IEnumerator<Cell> GetEnumerator()
         {
-            return Cells.Values.GetEnumerator();
+            return CellsById.Values.GetEnumerator();
         }
 
         IEnumerator IEnumerable.GetEnumerator()
@@ -223,91 +201,105 @@ namespace Excel
                 {
                     ErrorType = ErrorTypeEnum.MissingOperator;
                 }
-                else try
-                {
-                    (Adress adress1, Adress adress2, string op) = ReadExpression(valueStr);
-                    if (op != null)
+                else
+                { 
+                    try
                     {
-                        Cell cell1 = context.GetCell(adress1);
-                        Cell cell2 = context.GetCell(adress2);
-
-                        // Evaluate cell1
-                        if (!cell1.IsEvaluated) cell1.Evaluate(context);
-                        if (cell1.IsError)
+                        (string adress1, string adress2, string op) = ReadExpression(valueStr);
+                        if (op != null)
                         {
-                            if (cell1.ErrorType == ErrorTypeEnum.Cycle)
+                            Cell cell1 = context.GetCell(adress1);
+                            Cell cell2 = context.GetCell(adress2);
+
+                            if (cell1 != null && cell2 != null)
                             {
-                                ErrorType = ErrorTypeEnum.Cycle;
+
+                                // Evaluate cell1
+                                if (!cell1.IsEvaluated) cell1.Evaluate(context);
+                                if (cell1.IsError)
+                                {
+                                    if (cell1.ErrorType == ErrorTypeEnum.Cycle)
+                                    {
+                                        ErrorType = ErrorTypeEnum.Cycle;
+                                    }
+                                    else
+                                    {
+                                        ErrorType = ErrorTypeEnum.Error;
+                                    }
+                                }
+                                else // cell1 is ok
+                                {
+                                    // Evaluate cell2
+                                    if (!cell2.IsEvaluated) cell2.Evaluate(context);
+                                    if (cell2.IsError)
+                                    {
+                                        if (cell2.ErrorType == ErrorTypeEnum.Cycle)
+                                        {
+                                            ErrorType = ErrorTypeEnum.Cycle;
+                                        }
+                                        else
+                                        {
+                                            ErrorType = ErrorTypeEnum.Error;
+                                        }
+                                    }
+                                    else // cell2 is ok
+                                    {
+                                        try
+                                        {
+                                            object cell1Value = cell1.Value;
+                                            object cell2Value = cell2.Value;
+
+                                            if (cell1Value is string && (string)cell1Value == EmptyCellValue) cell1Value = 0;
+                                            if (cell2Value is string && (string)cell2Value == EmptyCellValue) cell2Value = 0;
+
+                                            switch (op)
+                                            {
+                                                case "+":
+                                                    this.Value = (int)cell1Value + (int)cell2Value;
+                                                    break;
+                                                case "-":
+                                                    this.Value = (int)cell1Value - (int)cell2Value;
+                                                    break;
+                                                case "*":
+                                                    this.Value = (int)cell1Value * (int)cell2Value;
+                                                    break;
+                                                case "/":
+                                                    if ((int)cell2Value == 0)
+                                                    {
+                                                        ErrorType = ErrorTypeEnum.DivisionByZero;
+                                                    }
+                                                    else
+                                                    {
+                                                        this.Value = (int)cell1Value / (int)cell2Value;
+                                                    }
+                                                    break;
+                                                default:
+                                                    ErrorType = ErrorTypeEnum.InvalidFormula;
+                                                    break;
+                                            }
+                                        }
+                                        catch
+                                        {
+                                            ErrorType = ErrorTypeEnum.Error;
+                                        }
+                                    }
+                                }
                             }
                             else
                             {
                                 ErrorType = ErrorTypeEnum.Error;
                             }
                         }
-                        else // cell1 is ok
+                        else
                         {
-                            // Evaluate cell2
-                            if (!cell2.IsEvaluated) cell2.Evaluate(context);
-                            if (cell2.IsError)
-                            {
-                                if (cell2.ErrorType == ErrorTypeEnum.Cycle)
-                                {
-                                    ErrorType = ErrorTypeEnum.Cycle;
-                                }
-                                else
-                                {
-                                    ErrorType = ErrorTypeEnum.Error;
-                                }
-                            }
-                            else // cell2 is ok
-                            {
-                                try
-                                {
-                                    object cell1Value = cell1.Value;
-                                    object cell2Value = cell2.Value;
-
-                                    if (cell1Value.ToString() == EmptyCellValue) cell1Value = 0;
-                                    if (cell2Value.ToString() == EmptyCellValue) cell2Value = 0;
-
-                                    switch (op)
-                                    {
-                                        case "+":
-                                            this.Value = (int)cell1Value + (int)cell2Value;
-                                            break;
-                                        case "-":
-                                            this.Value = (int)cell1Value - (int)cell2Value;
-                                            break;
-                                        case "*":
-                                            this.Value = (int)cell1Value * (int)cell2Value;
-                                            break;
-                                        case "/":
-                                            this.Value = (int)cell1Value / (int)cell2Value;
-                                            break;
-                                        default:
-                                            ErrorType = ErrorTypeEnum.InvalidFormula;
-                                            break;
-                                    }
-                                }
-                                catch (DivideByZeroException)
-                                {
-                                    ErrorType = ErrorTypeEnum.DivisionByZero;
-                                }
-                                catch
-                                {
-                                    ErrorType = ErrorTypeEnum.Error;
-                                }
-                            }
+                            ErrorType = ErrorTypeEnum.MissingOperator;
                         }
                     }
-                    else
+                    catch
                     {
-                        ErrorType = ErrorTypeEnum.MissingOperator;
+                        ErrorType = ErrorTypeEnum.InvalidFormula;
                     }
-                }
-                catch
-                {
-                    ErrorType = ErrorTypeEnum.InvalidFormula;
-                }
+            }
             }
             else // Invalid value
             {
@@ -327,7 +319,7 @@ namespace Excel
         /// </summary>
         /// <param name="expression">String expression</param>
         /// <returns>Expression splitted in parts</returns>
-        private (Adress adress1, Adress adress2, string op) ReadExpression(string expression)
+        private (string adress1, string adress2, string op) ReadExpression(string expression)
         {
             Adress adress1, adress2;
             string adressStr1 = null, adressStr2 = null; 
@@ -350,11 +342,7 @@ namespace Excel
                 }
             }
 
-            // Create adresses
-            adress1 = new Adress(adressStr1);
-            adress2 = new Adress(adressStr2);
-
-            return (adress1, adress2, op);
+            return (adressStr1, adressStr2, op);
         }
 
         #endregion
@@ -395,10 +383,11 @@ namespace Excel
     /// </summary>
     public struct Adress
     {
+        private const int lettersInAlphabet = 26;
+
         public uint Row { get; }
 
         public uint Column { get; }
-
 
         public Adress(uint row, uint column)
         {
@@ -406,9 +395,8 @@ namespace Excel
             this.Column = column;
         }
 
-        public Adress(string adress)
+        public Adress (string adress)
         {
-            const int lettersInAlphabet = 26;
             string colStr = null, rowStr = null;
             uint row = 0, col = 0;
 
@@ -449,29 +437,45 @@ namespace Excel
         }
 
         /// <summary>
-        /// Gets cells unique id.
+        /// Converts adress to ulong format
         /// </summary>
-        /// <returns>Unique id</returns>
-        public ulong GetId()
+        /// <returns>Ulong adress format</returns>
+        public ulong ToUlong()
         {
-            return Adress.GetId(this.Row, this.Column);
-        }
-
-        /// <summary>
-        /// Gets cells unique id.
-        /// </summary>
-        /// <param name="row">Row index</param>
-        /// <param name="column">Column index</param>
-        /// <returns>Unique id</returns>
-        public static ulong GetId(uint row, uint column)
-        {
-            ulong l = ((ulong)row << 33) + column;
+            ulong l = ((ulong)this.Row << 33) + this.Column;
             return l;
         }
 
+        /// <summary>
+        /// Converts adress to string format
+        /// </summary>
+        /// <returns>String adress format</returns>
         public override string ToString()
         {
-            return $"[{Row},{Column}]";
+            string colStr = "", rowStr = "";
+
+            // Column string
+            uint col = this.Column;
+            while (true)
+            {
+                uint q = col / lettersInAlphabet; 
+                if (q > 0)
+                {
+                    colStr += char.ToUpper((char)(q + 96));
+                    col -= q * lettersInAlphabet;
+                }
+                else
+                {
+                    colStr += char.ToUpper((char)(col + 97));
+                    break;
+                }
+            }
+
+
+            // Row string
+            rowStr = (this.Row + 1).ToString();
+
+            return colStr + rowStr;
         }
 
     }
