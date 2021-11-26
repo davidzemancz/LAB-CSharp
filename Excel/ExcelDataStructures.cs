@@ -187,8 +187,6 @@ namespace Excel
 
         private bool _isEvaluating;
 
-        private Dictionary<string, Func<object>> _operators;
-
         #endregion
 
         #region CONSTRUCTORS
