@@ -61,10 +61,7 @@ namespace Excel
     /// </summary>
     public class CellCollection : IEnumerable<Cell>
     {
-        protected Dictionary<ulong, Cell> CellsById { get; }
-
         protected Dictionary<string, Cell> CellsByString { get; }
-
 
         /// <summary>
         /// Get or set cell by adress
@@ -78,7 +75,6 @@ namespace Excel
 
         public CellCollection()
         {
-            this.CellsById = new Dictionary<ulong, Cell>();
             this.CellsByString = new Dictionary<string, Cell>();
         }
 
@@ -89,7 +85,6 @@ namespace Excel
         /// <param name="cell">Cell</param>
         public void Add(Cell cell)
         {
-            CellsById[cell.Adress.ToUlong()] = cell;
             CellsByString[cell.Adress.ToString()] = cell;
         }
 
@@ -105,7 +100,7 @@ namespace Excel
 
         public IEnumerator<Cell> GetEnumerator()
         {
-            return CellsById.Values.GetEnumerator();
+            return CellsByString.Values.GetEnumerator();
         }
 
         IEnumerator IEnumerable.GetEnumerator()
@@ -194,7 +189,7 @@ namespace Excel
             {
                 Value = valueInt;
             }
-            else if (valueStr.StartsWith("=")) // Expression
+            else if (valueStr.Length > 0 && valueStr[0] == '=') // Expression
             {
                 // Check operator
                 if (valueStr.IndexOfAny("+-*/".ToCharArray()) == -1)
@@ -320,7 +315,6 @@ namespace Excel
         /// <returns>Expression splitted in parts</returns>
         private (string adress1, string adress2, string op) ReadExpression(string expression)
         {
-            Adress adress1, adress2;
             string adressStr1 = null, adressStr2 = null; 
             string op = null;
 
@@ -380,7 +374,7 @@ namespace Excel
     /// <summary>
     /// Represents adress
     /// </summary>
-    public struct Adress
+    public class Adress
     {
         private const int lettersInAlphabet = 26;
 
