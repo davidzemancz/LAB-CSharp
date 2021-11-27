@@ -1,27 +1,20 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace Excel
 {
 
     /// <summary>
-    /// Excel application context
+    /// Sheet with cells
     /// </summary>
-    public class Context
+    public class Sheet
     {
-        protected Dictionary<string, Sheet> _sheets;
+        public Dictionary<string, Cell> Cells { get; }
 
-        /// <summary>
-        /// Add sheet to context
-        /// </summary>
-        /// <param name="sheet">Sheet</param>
-        public void AddSheet(Sheet sheet)
+        public string Name { get; set; }
+
+        public Sheet()
         {
-            _sheets.Add(sheet.Name, sheet);
+            Cells = new Dictionary<string, Cell>();
         }
 
         /// <summary>
@@ -31,82 +24,14 @@ namespace Excel
         /// <returns>Cell or null if cell does not exists</returns>
         public Cell GetCell(string adress)
         {
-            Sheet sheet = _sheets.FirstOrDefault().Value;
-            return sheet?.Cells?.Exists(adress) ?? false ? sheet.Cells[adress] : null;
+            return Cells?.ContainsKey(adress) ?? false ? Cells[adress] : null;
         }
 
-        public Context()
+        public void AddCell(Cell cell)
         {
-            _sheets = new Dictionary<string, Sheet>();
-        }
-    }
-
-    /// <summary>
-    /// Sheet with cells
-    /// </summary>
-    public class Sheet
-    {
-        public string Name { get; set; }
-
-        public CellCollection Cells { get; }
-
-        public Sheet()
-        {
-            Cells = new CellCollection();
-        }
-    }
-
-    /// <summary>
-    /// Collection of cells
-    /// </summary>
-    public class CellCollection : IEnumerable<Cell>
-    {
-        protected Dictionary<string, Cell> CellsByString { get; }
-
-        /// <summary>
-        /// Get or set cell by adress
-        /// </summary>
-        /// <param name="adress">Adress</param>
-        /// <returns></returns>
-        public Cell this[string adress]
-        {
-            get => CellsByString[adress];
+            Cells[cell.Adress] = cell;
         }
 
-        public CellCollection()
-        {
-            this.CellsByString = new Dictionary<string, Cell>();
-        }
-
-
-        /// <summary>
-        /// Adds new cell to collection.
-        /// </summary>
-        /// <param name="cell">Cell</param>
-        public void Add(Cell cell)
-        {
-            CellsByString[cell.Adress.ToString()] = cell;
-        }
-
-        /// <summary>
-        /// Checks if cell exists in collection.
-        /// </summary>
-        /// <param name="cell"></param>
-        /// <returns>True if cell exists in collection, otherwise false.</returns>
-        public bool Exists(string adress)
-        {
-            return CellsByString.ContainsKey(adress);
-        }
-
-        public IEnumerator<Cell> GetEnumerator()
-        {
-            return CellsByString.Values.GetEnumerator();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
     }
 
     /// <summary>
@@ -118,7 +43,7 @@ namespace Excel
 
         public const string EmptyCellValue = "[]";
 
-        public readonly static char[] Operators = new char[] { '+', '-', '*', '/' };
+        public readonly static char[] Operators = new char[] { '+', '-', '*', '/', '=' };
 
         public readonly static Cell Empty = new Cell(0, 0) { Value = 0, IsEvaluated = true };
 
@@ -171,7 +96,7 @@ namespace Excel
 
         #region PUBLIC METHODS
 
-        public void Evaluate(Context context)
+        public void Evaluate(Sheet sheet)
         {
             if (_isEvaluating)
             {
@@ -198,8 +123,7 @@ namespace Excel
             }
             else if (Value is string && ((string)Value).Length > 0 && ((string)Value)[0] == '=') // Expression
             {
-                string exprStr = ((string)Value).Substring(1);
-                string[] exprArr = exprStr.Split(Operators);
+                string[] exprArr = ((string)Value).Split(Operators);
                 if (exprArr.Length < 2)
                 {
                     ErrorType = ErrorTypeEnum.MissingOperator;
@@ -219,14 +143,14 @@ namespace Excel
                     }
                     else
                     {
-                        char op = exprStr[exprArr[0].Length];
-                        Cell cell1 = context.GetCell(adress1);
-                        Cell cell2 = context.GetCell(adress2);
+                        char op = ((string)Value)[exprArr[0].Length + 1];
+                        Cell cell1 = sheet.GetCell(adress1);
+                        Cell cell2 = sheet.GetCell(adress2);
 
                         if (cell1 == null) cell1 = Empty;
                         if (cell2 == null) cell2 = Empty;
 
-                        if (!cell1.IsEvaluated) cell1.Evaluate(context);
+                        if (!cell1.IsEvaluated) cell1.Evaluate(sheet);
                         if (cell1.IsError)
                         {
                             if (cell1.ErrorType == ErrorTypeEnum.Cycle) ErrorType = ErrorTypeEnum.Cycle;
@@ -234,7 +158,7 @@ namespace Excel
                         }
                         else
                         { 
-                            if (!cell2.IsEvaluated) cell2.Evaluate(context);
+                            if (!cell2.IsEvaluated) cell2.Evaluate(sheet);
                             if (cell2.IsError)
                             {
                                 if (cell2.ErrorType == ErrorTypeEnum.Cycle) ErrorType = ErrorTypeEnum.Cycle;

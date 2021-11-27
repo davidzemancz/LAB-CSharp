@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace Excel
 {
@@ -37,7 +34,7 @@ namespace Excel
                     string[] rowCells = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
                     for (uint col = 0; col < rowCells.Length; col++)
                     {
-                        sheet.Cells.Add(new Cell(row, col) { Value = rowCells[col]});
+                        sheet.AddCell(new Cell(row, col) { Value = rowCells[col]});
                     }
 
                     row++;
@@ -53,8 +50,14 @@ namespace Excel
             {
                 int lineIndex = 0;
                 StringBuilder lineBuilder = new StringBuilder();
-                foreach (var cell in sheet.Cells)
+                foreach (var kvp in sheet.Cells)
                 {
+                    Cell cell = kvp.Value;
+
+                    // Evaluate cell
+                    cell.Evaluate(sheet);
+
+                    // Write cell to file
                     if (cell.AdressRow > lineIndex)
                     {
                         // Remove last space
@@ -72,7 +75,7 @@ namespace Excel
 
                 if (lineBuilder.Length > 0)
                 {
-                    lineBuilder.Remove(lineBuilder.Length - 2, 1);
+                    lineBuilder.Remove(lineBuilder.Length - 1, 1);
                     writer.WriteLine(lineBuilder.ToString());
                 }
 

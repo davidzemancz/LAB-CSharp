@@ -1,22 +1,15 @@
-﻿using System;
-using System.IO;
-using System.Diagnostics;
-
-namespace Excel
+﻿namespace Excel
 {
     internal class Program
     {
         static void Main(string[] args)
         {
-            Context context = new Context();
-
             IOutputWriter outputWriterConsole = new ConsoleOutputWriter();
 
             if (args != null && args.Length == 2)
             {
                 // Read args
                 string inFilename = args[0];
-                string inFilenameShort = Path.GetFileNameWithoutExtension(inFilename);
                 string outFilename = args[1];
 
                 try
@@ -28,19 +21,6 @@ namespace Excel
 
                     // Read sheet from file
                     Sheet sheet = excelIO.ReadSheet();
-                    sheet.Name = inFilenameShort;
-
-                    // Add sheet to context
-                    context.AddSheet(sheet);
-
-                    // Evaluate cell values in context
-                    foreach (Cell cell in sheet.Cells)
-                    {
-                        cell.Evaluate(context);
-
-                        // Print cells for DEBUGGING
-                        //Console.WriteLine($"{cell.Adress} = {cell.Value}");
-                    }
 
                     // Write sheet to file
                     excelIO.WriteSheet(sheet);
