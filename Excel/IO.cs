@@ -48,7 +48,7 @@ namespace Excel
 
         public string ReadLine()
         {
-            return this._streamReader.EndOfStream ? null : this._streamReader.ReadLine();
+            return this._streamReader.ReadLine();
         }
 
         public void Open()

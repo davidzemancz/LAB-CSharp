@@ -37,7 +37,7 @@ namespace Excel
                     string[] rowCells = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
                     for (uint col = 0; col < rowCells.Length; col++)
                     {
-                        sheet.Cells.Add(new Cell(new Adress(row, col)) { Value = rowCells[col]});
+                        sheet.Cells.Add(new Cell(row, col) { Value = rowCells[col]});
                     }
 
                     row++;
@@ -55,7 +55,7 @@ namespace Excel
                 StringBuilder lineBuilder = new StringBuilder();
                 foreach (var cell in sheet.Cells)
                 {
-                    if (cell.Adress.Row > lineIndex)
+                    if (cell.AdressRow > lineIndex)
                     {
                         // Remove last space
                         if (lineBuilder.Length > 0) lineBuilder.Remove(lineBuilder.Length - 1, 1);

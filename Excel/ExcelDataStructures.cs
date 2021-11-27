@@ -118,11 +118,19 @@ namespace Excel
 
         public const string EmptyCellValue = "[]";
 
+        public readonly static char[] Operators = new char[] { '+', '-', '*', '/' };
+
+        public readonly static Cell Empty = new Cell(0, 0) { Value = 0, IsEvaluated = true };
+
         #endregion
 
         #region PROPS
 
-        public Adress Adress { get; }
+        public uint AdressRow { get; }
+
+        public uint AdressColumn { get; }
+
+        public string Adress { get; }
 
         public object Value { get; set; }
 
@@ -152,9 +160,11 @@ namespace Excel
 
         #region CONSTRUCTORS
 
-        public Cell (Adress adress)
+        public Cell(uint row, uint column)
         {
-            this.Adress = adress;
+            AdressRow = row;
+            AdressColumn = column;
+            Adress = GetAdressString();
         }
 
         #endregion
@@ -163,7 +173,6 @@ namespace Excel
 
         public void Evaluate(Context context)
         {
-            // If is already evaluating -> cycle
             if (_isEvaluating)
             {
                 ErrorType = ErrorTypeEnum.Cycle;
@@ -173,131 +182,97 @@ namespace Excel
             {
                 return;
             }
-
             _isEvaluating = true;
 
-            string valueStr = Value.ToString();
-            if (valueStr == EmptyCellValue) // Empty cell
+            if (Value is string && (string)Value == EmptyCellValue)
             {
                 // pass
             }
-            else if (Value is int) // Valid integer cell
+            else if (Value is int)
             {
                 // pass
             }
-            else if (int.TryParse(valueStr, out int valueInt)) // Cell with numeric string value
+            else if (!(Value is int) && int.TryParse(Value.ToString(), out int intValue)) // Convert value to int
             {
-                Value = valueInt;
+                this.Value = intValue;
             }
-            else if (valueStr.Length > 0 && valueStr[0] == '=') // Expression
+            else if (Value is string && ((string)Value).Length > 0 && ((string)Value)[0] == '=') // Expression
             {
-                // Check operator
-                if (valueStr.IndexOfAny("+-*/".ToCharArray()) == -1)
+                string exprStr = ((string)Value).Substring(1);
+                string[] exprArr = exprStr.Split(Operators);
+                if (exprArr.Length < 2)
                 {
                     ErrorType = ErrorTypeEnum.MissingOperator;
                 }
+                else if (exprArr.Length > 2)
+                {
+                    ErrorType = ErrorTypeEnum.InvalidFormula;
+                }
                 else
-                { 
-                    try
-                    {
-                        (string adress1, string adress2, string op) = ReadExpression(valueStr);
-                        if (op != null)
-                        {
-                            Cell cell1 = context.GetCell(adress1);
-                            Cell cell2 = context.GetCell(adress2);
-
-                            if (cell1 != null && cell2 != null)
-                            {
-                                // Evaluate cell1
-                                if (!cell1.IsEvaluated) cell1.Evaluate(context);
-                                if (cell1.IsError)
-                                {
-                                    if (cell1.ErrorType == ErrorTypeEnum.Cycle)
-                                    {
-                                        ErrorType = ErrorTypeEnum.Cycle;
-                                    }
-                                    else
-                                    {
-                                        ErrorType = ErrorTypeEnum.Error;
-                                    }
-                                }
-                                else // cell1 is ok
-                                {
-                                    // Evaluate cell2
-                                    if (!cell2.IsEvaluated) cell2.Evaluate(context);
-                                    if (cell2.IsError)
-                                    {
-                                        if (cell2.ErrorType == ErrorTypeEnum.Cycle)
-                                        {
-                                            ErrorType = ErrorTypeEnum.Cycle;
-                                        }
-                                        else
-                                        {
-                                            ErrorType = ErrorTypeEnum.Error;
-                                        }
-                                    }
-                                    else // cell2 is ok
-                                    {
-                                        try
-                                        {
-                                            object cell1Value = cell1.Value;
-                                            object cell2Value = cell2.Value;
-
-                                            if (cell1Value is string && (string)cell1Value == EmptyCellValue) cell1Value = 0;
-                                            if (cell2Value is string && (string)cell2Value == EmptyCellValue) cell2Value = 0;
-
-                                            switch (op)
-                                            {
-                                                case "+":
-                                                    this.Value = (int)cell1Value + (int)cell2Value;
-                                                    break;
-                                                case "-":
-                                                    this.Value = (int)cell1Value - (int)cell2Value;
-                                                    break;
-                                                case "*":
-                                                    this.Value = (int)cell1Value * (int)cell2Value;
-                                                    break;
-                                                case "/":
-                                                    if ((int)cell2Value == 0)
-                                                    {
-                                                        ErrorType = ErrorTypeEnum.DivisionByZero;
-                                                    }
-                                                    else
-                                                    {
-                                                        this.Value = (int)cell1Value / (int)cell2Value;
-                                                    }
-                                                    break;
-                                                default:
-                                                    ErrorType = ErrorTypeEnum.InvalidFormula;
-                                                    break;
-                                            }
-                                        }
-                                        catch
-                                        {
-                                            ErrorType = ErrorTypeEnum.Error;
-                                        }
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                ErrorType = ErrorTypeEnum.InvalidFormula;
-                            }
-                        }
-                        else
-                        {
-                            ErrorType = ErrorTypeEnum.MissingOperator;
-                        }
-                    }
-                    catch
+                {
+                    string adress1 = exprArr[0];
+                    string adress2 = exprArr[1];
+                    if (adress1.Length == 0 || !char.IsLetter(adress1, 0) || !char.IsUpper(adress1, 0) || !char.IsNumber(adress1, adress1.Length - 1)
+                     || adress2.Length == 0 || !char.IsLetter(adress2, 0) || !char.IsUpper(adress2, 0) || !char.IsNumber(adress2, adress2.Length - 1))
                     {
                         ErrorType = ErrorTypeEnum.InvalidFormula;
                     }
+                    else
+                    {
+                        char op = exprStr[exprArr[0].Length];
+                        Cell cell1 = context.GetCell(adress1);
+                        Cell cell2 = context.GetCell(adress2);
+
+                        if (cell1 == null) cell1 = Empty;
+                        if (cell2 == null) cell2 = Empty;
+
+                        if (!cell1.IsEvaluated) cell1.Evaluate(context);
+                        if (cell1.IsError)
+                        {
+                            if (cell1.ErrorType == ErrorTypeEnum.Cycle) ErrorType = ErrorTypeEnum.Cycle;
+                            else ErrorType = ErrorTypeEnum.Error;
+                        }
+                        else
+                        { 
+                            if (!cell2.IsEvaluated) cell2.Evaluate(context);
+                            if (cell2.IsError)
+                            {
+                                if (cell2.ErrorType == ErrorTypeEnum.Cycle) ErrorType = ErrorTypeEnum.Cycle;
+                                else ErrorType = ErrorTypeEnum.Error;
+                            }
+                            else
+                            {
+                                int cell1Int = cell1.Value is string ? 0 : (int)cell1.Value;
+                                int cell2Int = cell2.Value is string ? 0 : (int)cell2.Value;
+
+                                switch (op)
+                                {
+                                    case '+':
+                                        Value = cell1Int + cell2Int;
+                                        break;
+                                    case '-':
+                                        Value = cell1Int - cell2Int;
+                                        break;
+                                    case '*':
+                                        Value = cell1Int * cell2Int;
+                                        break;
+                                    case '/':
+                                        if (cell2Int == 0) ErrorType = ErrorTypeEnum.DivisionByZero;
+                                        else Value = cell1Int / cell2Int;
+                                        break;
+                                    default:
+                                        ErrorType = ErrorTypeEnum.InvalidFormula;
+                                        break;
+                                }
+                            }
+                        }
+                    }
+
+                }
             }
-            }
-            else // Invalid value
+            else
             {
-                ErrorType = ErrorTypeEnum.InvalidValue;
+                this.ErrorType = ErrorTypeEnum.InvalidValue;
             }
 
             _isEvaluating = false;
@@ -308,34 +283,33 @@ namespace Excel
 
         #region PRIVATE METHODS
 
-        /// <summary>
-        /// Reads expression
-        /// </summary>
-        /// <param name="expression">String expression</param>
-        /// <returns>Expression splitted in parts</returns>
-        private (string adress1, string adress2, string op) ReadExpression(string expression)
+        private string GetAdressString()
         {
-            string adressStr1 = null, adressStr2 = null; 
-            string op = null;
+            const int lettersInAlphabet = 26;
 
-            // Read expression
-            for (int i = 1; i < expression.Length; i++) // Starting at index 1, expression[0] = '='
+            string colStr = "", rowStr = "";
+
+            // Column string
+            uint col = AdressColumn;
+            while (true)
             {
-                if (expression[i] == '+' || expression[i] == '-' || expression[i] == '*' || expression[i] == '/')
+                uint q = col / lettersInAlphabet;
+                if (q > 0)
                 {
-                    op = expression[i].ToString();
-                }
-                else if (op == null) 
-                { 
-                    adressStr1 += expression[i];
+                    colStr += char.ToUpper((char)(q + 96));
+                    col -= q * lettersInAlphabet;
                 }
                 else
                 {
-                    adressStr2 += expression[i];
+                    colStr += char.ToUpper((char)(col + 97));
+                    break;
                 }
             }
 
-            return (adressStr1, adressStr2, op);
+            // Row string
+            rowStr = (AdressRow + 1).ToString();
+
+            return colStr + rowStr;
         }
 
         #endregion
@@ -369,107 +343,6 @@ namespace Excel
         }
 
         #endregion
-    }
 
-    /// <summary>
-    /// Represents adress
-    /// </summary>
-    public class Adress
-    {
-        private const int lettersInAlphabet = 26;
-
-        public uint Row { get; }
-
-        public uint Column { get; }
-
-        public Adress(uint row, uint column)
-        {
-            this.Row = row;
-            this.Column = column;
         }
-
-        public Adress (string adress)
-        {
-            string colStr = null, rowStr = null;
-            uint row = 0, col = 0;
-
-            // Read col and row adress to strings
-            for (int i = 0; i < adress.Length; i++)
-            {
-                if (char.IsLetter(adress[i]) && rowStr == null)
-                {
-                    colStr += char.ToLower(adress[i]);
-                }
-                else if (char.IsNumber(adress[i]) && colStr != null)
-                {
-                    rowStr += adress[i];
-                }
-                else
-                {
-                    throw new ArgumentException("Invalid adress format");
-                }
-            }
-
-            // Parse row adress
-            row = uint.Parse(rowStr);
-
-            // Parse column adress
-            int power = colStr.Length - 1;
-            for (int i = 0; i < colStr.Length; i++)
-            {
-                uint letterVal = (uint)(colStr[i] - ('a' - 1));
-                col += letterVal * (uint)Math.Pow(lettersInAlphabet, power--);
-            }
-
-            // Indexing from 0
-            row -= 1;
-            col -= 1;
-
-            this.Row = row;
-            this.Column = col;
-        }
-
-        /// <summary>
-        /// Converts adress to ulong format
-        /// </summary>
-        /// <returns>Ulong adress format</returns>
-        public ulong ToUlong()
-        {
-            ulong l = ((ulong)this.Row << 33) + this.Column;
-            return l;
-        }
-
-        /// <summary>
-        /// Converts adress to string format
-        /// </summary>
-        /// <returns>String adress format</returns>
-        public override string ToString()
-        {
-            string colStr = "", rowStr = "";
-
-            // Column string
-            uint col = this.Column;
-            while (true)
-            {
-                uint q = col / lettersInAlphabet; 
-                if (q > 0)
-                {
-                    colStr += char.ToUpper((char)(q + 96));
-                    col -= q * lettersInAlphabet;
-                }
-                else
-                {
-                    colStr += char.ToUpper((char)(col + 97));
-                    break;
-                }
-            }
-
-
-            // Row string
-            rowStr = (this.Row + 1).ToString();
-
-            return colStr + rowStr;
-        }
-
-    }
 }
