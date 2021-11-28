@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Excel
 {
@@ -18,7 +20,7 @@ namespace Excel
         }
 
         /// <summary>
-        /// Get cell from context by adress
+        /// Get cell from sheet by adress
         /// </summary>
         /// <param name="adress">Cell adress</param>
         /// <returns>Cell or null if cell does not exists</returns>
@@ -27,9 +29,13 @@ namespace Excel
             return Cells?.ContainsKey(adress) ?? false ? Cells[adress] : null;
         }
 
+        /// <summary>
+        /// Add cell to sheet
+        /// </summary>
+        /// <param name="cell">Cell</param>
         public void AddCell(Cell cell)
         {
-            Cells[cell.Adress] = cell;
+            Cells.Add(cell.Adress, cell);
         }
 
     }
@@ -41,9 +47,9 @@ namespace Excel
     {
         #region CONSTS
 
-        public const string EmptyCellValue = "[]";
+        private const int lettersInAlphabet = 26;
 
-        public readonly static char[] Operators = new char[] { '+', '-', '*', '/', '=' };
+        public const string EmptyCellValue = "[]";
 
         public readonly static Cell Empty = new Cell(0, 0) { Value = 0, IsEvaluated = true };
 
@@ -65,11 +71,9 @@ namespace Excel
             set
             {
                 _errorType = value;
-                if (IsError) Value = ErrorTypeEnumToString(ErrorType);
+                if (ErrorType > 0) Value = ErrorTypeEnumToString(ErrorType);
             }
         }
-
-        public bool IsError => (int)this.ErrorType > 0;
 
         public bool IsEvaluated { get; protected set; }
 
@@ -117,33 +121,42 @@ namespace Excel
             {
                 // pass
             }
-            else if (!(Value is int) && int.TryParse(Value.ToString(), out int intValue)) // Convert value to int
+            else if (Value is string valueStr && valueStr.Length > 0 && valueStr[0] == '=') // Expression
             {
-                this.Value = intValue;
-            }
-            else if (Value is string && ((string)Value).Length > 0 && ((string)Value)[0] == '=') // Expression
-            {
-                string[] exprArr = ((string)Value).Split(Operators);
-                if (exprArr.Length < 2)
+                char op = ' ';
+                string adress1 = null, adress2 = null;
+                StringBuilder adressBuilder = new StringBuilder();
+                for (int i = 1; i < valueStr.Length; i++)
+                {
+                    char c = valueStr[i];
+                    if (c == '+' || c == '-' || c == '*' || c == '/')
+                    {
+                        op = c;
+                        adress1 = adressBuilder.ToString();
+                        adressBuilder.Clear();
+                    }
+                    else
+                    {
+                         adressBuilder.Append(c);
+                    }
+                }
+                adress2 = adressBuilder.ToString();
+
+                if (op == ' ')
                 {
                     ErrorType = ErrorTypeEnum.MissingOperator;
                 }
-                else if (exprArr.Length > 2)
-                {
-                    ErrorType = ErrorTypeEnum.InvalidFormula;
-                }
                 else
                 {
-                    string adress1 = exprArr[0];
-                    string adress2 = exprArr[1];
-                    if (adress1.Length == 0 || !char.IsLetter(adress1, 0) || !char.IsUpper(adress1, 0) || !char.IsNumber(adress1, adress1.Length - 1)
-                     || adress2.Length == 0 || !char.IsLetter(adress2, 0) || !char.IsUpper(adress2, 0) || !char.IsNumber(adress2, adress2.Length - 1))
+                    bool adress1Valid = (adress1.Length > 0 && char.IsLetter(adress1[0]) && char.IsDigit(adress1[adress1.Length - 1]));
+                    bool adress2Valid = (adress2.Length > 0 && char.IsLetter(adress2[0]) && char.IsDigit(adress2[adress2.Length - 1]));
+
+                    if (!adress1Valid || !adress2Valid)
                     {
                         ErrorType = ErrorTypeEnum.InvalidFormula;
                     }
                     else
                     {
-                        char op = ((string)Value)[exprArr[0].Length + 1];
                         Cell cell1 = sheet.GetCell(adress1);
                         Cell cell2 = sheet.GetCell(adress2);
 
@@ -151,15 +164,15 @@ namespace Excel
                         if (cell2 == null) cell2 = Empty;
 
                         if (!cell1.IsEvaluated) cell1.Evaluate(sheet);
-                        if (cell1.IsError)
+                        if (cell1.ErrorType > 0)
                         {
                             if (cell1.ErrorType == ErrorTypeEnum.Cycle) ErrorType = ErrorTypeEnum.Cycle;
                             else ErrorType = ErrorTypeEnum.Error;
                         }
                         else
-                        { 
+                        {
                             if (!cell2.IsEvaluated) cell2.Evaluate(sheet);
-                            if (cell2.IsError)
+                            if (cell2.ErrorType > 0)
                             {
                                 if (cell2.ErrorType == ErrorTypeEnum.Cycle) ErrorType = ErrorTypeEnum.Cycle;
                                 else ErrorType = ErrorTypeEnum.Error;
@@ -189,10 +202,15 @@ namespace Excel
                                         break;
                                 }
                             }
+
                         }
                     }
 
                 }
+            }
+            else if (!(Value is int) && int.TryParse(Value.ToString(), out int intValue)) // Convert value to int
+            {
+                this.Value = intValue;
             }
             else
             {
@@ -209,31 +227,26 @@ namespace Excel
 
         private string GetAdressString()
         {
-            const int lettersInAlphabet = 26;
-
-            string colStr = "", rowStr = "";
+            StringBuilder colStrBuilder = new StringBuilder();
 
             // Column string
-            uint col = AdressColumn;
+            uint col = AdressColumn;    
             while (true)
             {
                 uint q = col / lettersInAlphabet;
                 if (q > 0)
                 {
-                    colStr += char.ToUpper((char)(q + 96));
+                    colStrBuilder.Append(char.ToUpper((char)(q + 96)));
                     col -= q * lettersInAlphabet;
                 }
                 else
                 {
-                    colStr += char.ToUpper((char)(col + 97));
+                    colStrBuilder.Append(char.ToUpper((char)(col + 97)));
                     break;
                 }
             }
 
-            // Row string
-            rowStr = (AdressRow + 1).ToString();
-
-            return colStr + rowStr;
+            return colStrBuilder.Append(AdressRow + 1).ToString();
         }
 
         #endregion

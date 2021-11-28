@@ -64,6 +64,9 @@ namespace Excel
     public interface IOutputWriter : IDisposable
     {
         public void Open();
+
+        public void Write(string value);
+
         public void WriteLine(string line);
     }
 
@@ -73,6 +76,12 @@ namespace Excel
         {
             Console.WriteLine(line);
         }
+
+        public void Write(string value)
+        {
+            Console.Write(value);
+        }
+
         public void Open()
         {
             throw new NotImplementedException();
@@ -93,6 +102,11 @@ namespace Excel
         public FileOutputWriter(string filename)
         {
             _fileName = filename;
+        }
+
+        public void Write(string value)
+        {
+            this._streamWriter.Write(value);
         }
 
         public void WriteLine(string line)
