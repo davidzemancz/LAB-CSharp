@@ -48,8 +48,7 @@ namespace Excel
             this.OutputWriter.Open();
             using (var writer = this.OutputWriter)
             {
-                int lineIndex = 0;
-                StringBuilder lineBuilder = new StringBuilder();
+                int lineIndex = -1;
                 foreach (var kvp in sheet.Cells)
                 {
                     Cell cell = kvp.Value;
@@ -60,25 +59,19 @@ namespace Excel
                     // Write cell to file
                     if (cell.AdressRow > lineIndex)
                     {
-                        // Remove last space
-                        if (lineBuilder.Length > 0) lineBuilder.Remove(lineBuilder.Length - 1, 1);
-
                         lineIndex++;
-                        writer.WriteLine(lineBuilder.ToString());
 
-                        lineBuilder.Clear();
+                        if(lineIndex > 0) writer.WriteLine("");
+                        writer.Write(cell.Value?.ToString());
                     }
-                    
-                    lineBuilder.Append(cell.Value);
-                    lineBuilder.Append(' ');
-                }
+                    else
+                    {
+                        writer.Write(" ");
+                        writer.Write(cell.Value?.ToString());
+                    }
 
-                if (lineBuilder.Length > 0)
-                {
-                    lineBuilder.Remove(lineBuilder.Length - 1, 1);
-                    writer.WriteLine(lineBuilder.ToString());
+                    //Console.WriteLine($"{cell.Adress} = {cell.Value}");
                 }
-
             }
         }
     }
