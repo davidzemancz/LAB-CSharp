@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Text;
 
 namespace Excel
@@ -49,9 +50,11 @@ namespace Excel
             using (var writer = this.OutputWriter)
             {
                 int lineIndex = -1;
-                foreach (var kvp in sheet.Cells)
+                var keys = sheet.CellsById.Keys.ToList();
+                keys.Sort();
+                foreach (var key in keys)
                 {
-                    Cell cell = kvp.Value;
+                    Cell cell = sheet.CellsById[key];
 
                     // Evaluate cell
                     cell.Evaluate(sheet);
@@ -69,7 +72,6 @@ namespace Excel
                         writer.Write(" ");
                         writer.Write(cell.Value?.ToString());
                     }
-
                     //Console.WriteLine($"{cell.Adress} = {cell.Value}");
                 }
             }

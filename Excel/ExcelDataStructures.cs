@@ -10,13 +10,16 @@ namespace Excel
     /// </summary>
     public class Sheet
     {
-        public Dictionary<string, Cell> Cells { get; }
+        public Dictionary<string, Cell> CellsByAdress { get; }
+
+        public Dictionary<ulong, Cell> CellsById { get; }
 
         public string Name { get; set; }
 
         public Sheet()
         {
-            Cells = new Dictionary<string, Cell>();
+            CellsByAdress = new Dictionary<string, Cell>();
+            CellsById = new Dictionary<ulong, Cell>();
         }
 
         /// <summary>
@@ -26,7 +29,7 @@ namespace Excel
         /// <returns>Cell or null if cell does not exists</returns>
         public Cell GetCell(string adress)
         {
-            return Cells?.ContainsKey(adress) ?? false ? Cells[adress] : null;
+            return CellsByAdress?.ContainsKey(adress) ?? false ? CellsByAdress[adress] : null;
         }
 
         /// <summary>
@@ -35,7 +38,8 @@ namespace Excel
         /// <param name="cell">Cell</param>
         public void AddCell(Cell cell)
         {
-            Cells.Add(cell.Adress, cell);
+            CellsByAdress.Add(cell.Adress, cell);
+            CellsById.Add(((ulong)cell.AdressRow << 33) + cell.AdressColumn, cell);
         }
 
     }
@@ -146,7 +150,7 @@ namespace Excel
                         {
                             if (!CharIsValidLetter(c))
                             {
-                                if (CharIsValidDigit(c))
+                                if (CharIsValidDigit(c) && adressBuilder.Length > 0)
                                 {
                                     readingDigits = true;
                                 }
@@ -236,7 +240,14 @@ namespace Excel
             }
             else if (!(Value is int) && int.TryParse(Value.ToString(), out int intValue)) // Convert value to int
             {
-                this.Value = intValue;
+                if (intValue < 0)
+                {
+                    ErrorType = ErrorTypeEnum.InvalidValue;
+                }
+                else
+                {
+                    this.Value = intValue;
+                }
             }
             else
             {
@@ -285,7 +296,6 @@ namespace Excel
 
         public enum ErrorTypeEnum
         {
-            None = 0,
             Error = 1,
             DivisionByZero = 2,
             Cycle = 3,
@@ -298,7 +308,6 @@ namespace Excel
         {
             switch (value)
             {
-                case ErrorTypeEnum.None: return "";
                 case ErrorTypeEnum.Error: return "#ERROR";
                 case ErrorTypeEnum.DivisionByZero: return "#DIV0";
                 case ErrorTypeEnum.Cycle: return "#CYCLE";
