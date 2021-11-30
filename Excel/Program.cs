@@ -28,6 +28,7 @@
                 catch
                 {
                     // Unexpected error
+                    throw;
                     outputWriterConsole.WriteLine("File Error");
                 }
             }

@@ -12,8 +12,11 @@ namespace ExcelTests
             Cell cell = new Cell(0,0);
             Assert.AreEqual("A1", cell.Adress);
 
-            cell = new Cell(0, 26);
-            Assert.AreEqual("AA1", cell.Adress);
+            cell = new Cell(0, 25);
+            Assert.AreEqual("Z1", cell.Adress);
+
+            cell = new Cell(0, 2000);
+            Assert.AreEqual("Z1", cell.Adress);
         }
 
         [TestMethod]

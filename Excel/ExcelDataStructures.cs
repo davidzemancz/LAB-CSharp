@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -267,13 +268,13 @@ namespace Excel
             StringBuilder colStrBuilder = new StringBuilder();
 
             // Column string
-            uint col = AdressColumn;    
+            uint col = AdressColumn;
             while (true)
             {
                 uint q = col / LettersInAlphabet;
                 if (q > 0)
                 {
-                    colStrBuilder.Append(Alphabet[q - 1]);
+                    colStrBuilder.Append(Alphabet[col % LettersInAlphabet]);
                     col -= q * LettersInAlphabet;
                 }
                 else
