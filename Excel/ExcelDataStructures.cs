@@ -2,9 +2,46 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 
 namespace Excel
 {
+    /// <summary>
+    /// Context
+    /// </summary>
+    public class Context
+    {
+        public Dictionary<string, Sheet> Sheets { get; set; }
+
+        public Sheet PrimarySheet { get; set; }
+
+        public Context (Sheet primarySheet)
+        {
+            Sheets = new Dictionary<string, Sheet>();
+            Sheets.Add(primarySheet.Name, primarySheet);
+            PrimarySheet = primarySheet;
+        }
+
+        /// <summary>
+        /// Get cell from primary sheet by adress
+        /// </summary>
+        /// <param name="adress">Cell adress</param>
+        /// <returns>Cell or null if cell does not exists</returns>
+        public Cell GetCell(string adress)
+        {
+            return PrimarySheet.CellsByAdress?.ContainsKey(adress) ?? false ? PrimarySheet.CellsByAdress[adress] : null;
+        }
+
+        /// <summary>
+        /// Get cell from specific sheet by adress
+        /// </summary>
+        /// <param name="adress">Cell adress</param>
+        /// <returns>Cell or null if cell does not exists</returns>
+        public Cell GetCell(string sheetName, string adress)
+        {
+            return PrimarySheet.CellsByAdress?.ContainsKey(adress) ?? false ? PrimarySheet.CellsByAdress[adress] : null;
+        }
+    }
 
     /// <summary>
     /// Sheet with cells
@@ -20,15 +57,6 @@ namespace Excel
             CellsByAdress = new Dictionary<string, Cell>();
         }
 
-        /// <summary>
-        /// Get cell from sheet by adress
-        /// </summary>
-        /// <param name="adress">Cell adress</param>
-        /// <returns>Cell or null if cell does not exists</returns>
-        public Cell GetCell(string adress)
-        {
-            return CellsByAdress?.ContainsKey(adress) ?? false ? CellsByAdress[adress] : null;
-        }
 
         /// <summary>
         /// Add cell to sheet
@@ -104,7 +132,11 @@ namespace Excel
 
         #region PUBLIC METHODS
 
-        public void Evaluate(Sheet sheet)
+        /// <summary>
+        /// Evaluate cell in specific context (sheet, range, multiple sheets ...)
+        /// </summary>
+        /// <param name="context">Context object</param>
+        public void Evaluate(Context context)
         {
             if (_isEvaluating)
             {
@@ -182,15 +214,14 @@ namespace Excel
                 }
                 else
                 {
-                    Cell cell1 = sheet.GetCell(adress1);
-                    Cell cell2 = sheet.GetCell(adress2);
+                    Cell cell1 = context.GetCell(adress1);
+                    Cell cell2 = context.GetCell(adress2);
 
                     if (cell1 == null) cell1 = Empty;
                     if (cell2 == null) cell2 = Empty;
 
                     bool cell1Evaluated = cell1.IsEvaluated;
-
-                    if (!cell1Evaluated) cell1.Evaluate(sheet);
+                    if (!cell1Evaluated) cell1.Evaluate(context);
                     if (cell1.ErrorType > 0)
                     {
                         if (!cell1Evaluated && cell1.ErrorType == ErrorTypeEnum.Cycle) ErrorType = ErrorTypeEnum.Cycle;
@@ -200,7 +231,7 @@ namespace Excel
                     {
                         bool cell2Evaluated = cell2.IsEvaluated;
 
-                        if (!cell2Evaluated) cell2.Evaluate(sheet);
+                        if (!cell2Evaluated) cell2.Evaluate(context);
                         if (cell2.ErrorType > 0)
                         {
                             if (!cell2Evaluated && cell2.ErrorType == ErrorTypeEnum.Cycle) ErrorType = ErrorTypeEnum.Cycle;

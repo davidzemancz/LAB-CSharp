@@ -44,7 +44,7 @@ namespace Excel
             return sheet;
         }
 
-        public void WriteSheet(Sheet sheet)
+        public void EvaluateAndWriteSheet(Sheet sheet, Context context)
         {
             this.OutputWriter.Open();
             using (var writer = this.OutputWriter)
@@ -55,7 +55,7 @@ namespace Excel
                     Cell cell = kvp.Value;
 
                     // Evaluate cell
-                    cell.Evaluate(sheet);
+                    cell.Evaluate(context);
 
                     // Write cell to file
                     if (cell.AdressRow > lineIndex)
