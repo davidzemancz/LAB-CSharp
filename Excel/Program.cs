@@ -1,4 +1,6 @@
-﻿namespace Excel
+﻿using System;
+
+namespace Excel
 {
     internal class Program
     {
@@ -28,7 +30,6 @@
                 catch
                 {
                     // Unexpected error
-                    throw;
                     outputWriterConsole.WriteLine("File Error");
                 }
             }

@@ -13,14 +13,11 @@ namespace Excel
     {
         public Dictionary<string, Cell> CellsByAdress { get; }
 
-        public Dictionary<ulong, Cell> CellsById { get; }
-
         public string Name { get; set; }
 
         public Sheet()
         {
             CellsByAdress = new Dictionary<string, Cell>();
-            CellsById = new Dictionary<ulong, Cell>();
         }
 
         /// <summary>
@@ -40,7 +37,6 @@ namespace Excel
         public void AddCell(Cell cell)
         {
             CellsByAdress.Add(cell.Adress, cell);
-            CellsById.Add(((ulong)cell.AdressRow << 33) + cell.AdressColumn, cell);
         }
 
     }
@@ -65,9 +61,9 @@ namespace Excel
 
         #region PROPS
 
-        public uint AdressRow { get; }
+        public int AdressRow { get; }
 
-        public uint AdressColumn { get; }
+        public int AdressColumn { get; }
 
         public string Adress { get; }
 
@@ -97,7 +93,7 @@ namespace Excel
 
         #region CONSTRUCTORS
 
-        public Cell(uint row, uint column)
+        public Cell(int row, int column)
         {
             AdressRow = row;
             AdressColumn = column;
@@ -265,26 +261,34 @@ namespace Excel
 
         private string GetAdressString()
         {
-            StringBuilder colStrBuilder = new StringBuilder();
-
-            // Column string
-            uint col = AdressColumn;
-            while (true)
+            StringBuilder builder = new StringBuilder();
+            int col = AdressColumn + 1;
+            while (col > 0)
             {
-                uint q = col / LettersInAlphabet;
-                if (q > 0)
-                {
-                    colStrBuilder.Append(Alphabet[col % LettersInAlphabet]);
-                    col -= q * LettersInAlphabet;
-                }
-                else
-                {
-                    colStrBuilder.Append(Alphabet[col]);
-                    break;
-                }
+                int r = (col - 1) % LettersInAlphabet;
+                builder.Append(Alphabet[r]);
+                col = (col - r) / LettersInAlphabet;
             }
+            builder = ReverseStringBuilder(builder);
 
-            return colStrBuilder.Append(AdressRow + 1).ToString();
+            return builder.Append(AdressRow + 1).ToString();
+        }
+
+        private StringBuilder ReverseStringBuilder(StringBuilder sb)
+        {
+            char t;
+            int end = sb.Length - 1;
+            int start = 0;
+
+            while (end - start > 0)
+            {
+                t = sb[end];
+                sb[end] = sb[start];
+                sb[start] = t;
+                start++;
+                end--;
+            }
+            return sb;
         }
 
         private bool CharIsValidLetter(char c) => (64 < c && c < 91);

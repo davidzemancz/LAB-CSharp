@@ -27,13 +27,13 @@ namespace Excel
             this.InputReader.Open();
             using (var reader = this.InputReader)
             {
-                uint row = 0;
+                int row = 0;
                 while (true)
                 {
                     string line = reader.ReadLine();
                     if (line == null) break;
                     string[] rowCells = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                    for (uint col = 0; col < rowCells.Length; col++)
+                    for (int col = 0; col < rowCells.Length; col++)
                     {
                         sheet.AddCell(new Cell(row, col) { Value = rowCells[col]});
                     }
@@ -50,11 +50,9 @@ namespace Excel
             using (var writer = this.OutputWriter)
             {
                 int lineIndex = -1;
-                var keys = sheet.CellsById.Keys.ToList();
-                keys.Sort();
-                foreach (var key in keys)
+                foreach (var kvp in sheet.CellsByAdress)
                 {
-                    Cell cell = sheet.CellsById[key];
+                    Cell cell = kvp.Value;
 
                     // Evaluate cell
                     cell.Evaluate(sheet);

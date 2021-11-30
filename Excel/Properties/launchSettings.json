@@ -2,7 +2,7 @@
   "profiles": {
     "Excel": {
       "commandName": "Project",
-      "commandLineArgs": "C:\\Users\\david.zeman\\Downloads\\sample-small.sheet C:\\Users\\david.zeman\\Downloads\\sample.eval"
+      "commandLineArgs": "C:\\Users\\david.zeman\\Downloads\\sample.sheet C:\\Users\\david.zeman\\Downloads\\sample.eval"
     }
   }
 }
