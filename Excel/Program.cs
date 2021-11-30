@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 
 namespace Excel
 {
@@ -23,12 +24,13 @@ namespace Excel
 
                     // Read sheet from file
                     Sheet sheet = excelIO.ReadSheet();
+                    sheet.Name = Path.GetFileNameWithoutExtension(inFilename);
 
                     // Create context
                     Context context = new Context(sheet);
 
                     // Write sheet to file
-                    excelIO.EvaluateAndWrite(sheet);
+                    excelIO.EvaluateAndWriteSheet(sheet, context);
                 }
                 catch
                 {

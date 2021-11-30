@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
@@ -21,6 +22,10 @@ namespace Excel
             this.OutputWriter = outputWriter;
         }
 
+        /// <summary>
+        /// Reads sheet from file
+        /// </summary>
+        /// <returns></returns>
         public Sheet ReadSheet()
         {
             Sheet sheet = new Sheet();
@@ -28,48 +33,48 @@ namespace Excel
             using (var reader = this.InputReader)
             {
                 int row = 0;
+                List<Cell> rowCells;
                 while (true)
                 {
                     string line = reader.ReadLine();
                     if (line == null) break;
-                    string[] rowCells = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                    for (int col = 0; col < rowCells.Length; col++)
+                    string[] rowCellsStr = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    rowCells = new List<Cell>();
+                    for (int col = 0; col < rowCellsStr.Length; col++)
                     {
-                        sheet.AddCell(new Cell(row, col) { Value = rowCells[col]});
+                        rowCells.Add(new Cell(row, col) { Value = rowCellsStr[col]});   
                     }
-
+                    sheet.AddRow(rowCells.ToArray());
                     row++;
                 }
             }
             return sheet;
         }
 
+        /// <summary>
+        /// Evaluates all sheet cells in context and writes sheet to file
+        /// </summary>
+        /// <param name="sheet"></param>
+        /// <param name="context"></param>
         public void EvaluateAndWriteSheet(Sheet sheet, Context context)
         {
             this.OutputWriter.Open();
             using (var writer = this.OutputWriter)
             {
-                int lineIndex = -1;
-                foreach (var kvp in sheet.CellsByAdress)
+                foreach (var row in sheet.Cells)
                 {
-                    Cell cell = kvp.Value;
-
-                    // Evaluate cell
-                    cell.Evaluate(context);
-
-                    // Write cell to file
-                    if (cell.AdressRow > lineIndex)
+                    for (int col = 0; col < row.Length ; col++)
                     {
-                        lineIndex++;
+                        Cell cell = row[col];
 
-                        if(lineIndex > 0) writer.WriteLine("");
-                        writer.Write(cell.Value?.ToString());
+                        // Evaluate cell
+                        if(!cell.IsEvaluated) cell.Evaluate(context);
+
+                        writer.Write(cell.Value.ToString());
+                        if (col < row.Length - 1) writer.Write(" ");
                     }
-                    else
-                    {
-                        writer.Write(" ");
-                        writer.Write(cell.Value?.ToString());
-                    }
+                    writer.WriteLine("");
+                    
                     //Console.WriteLine($"{cell.Adress} = {cell.Value}");
                 }
             }
