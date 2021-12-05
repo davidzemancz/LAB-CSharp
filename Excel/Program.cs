@@ -24,13 +24,9 @@ namespace Excel
 
                     // Read sheet from file
                     Sheet sheet = excelIO.ReadSheet();
-                    sheet.Name = Path.GetFileNameWithoutExtension(inFilename);
-
-                    // Create context
-                    Context context = new Context(sheet);
 
                     // Write sheet to file
-                    excelIO.EvaluateAndWriteSheet(sheet, context);
+                    excelIO.EvaluateAndWriteSheet(sheet);
                 }
                 catch
                 {

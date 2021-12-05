@@ -7,19 +7,17 @@ using System.Threading;
 namespace Excel
 {
     /// <summary>
-    /// Context
+    /// Sheet with cells
     /// </summary>
-    public class Context
+    public class Sheet
     {
-        public Dictionary<string, Sheet> Sheets { get; set; }
+        public List<Cell[]> Rows { get; }
 
-        public Sheet PrimarySheet { get; set; }
+        public string Name { get; set; }
 
-        public Context (Sheet primarySheet)
+        public Sheet()
         {
-            Sheets = new Dictionary<string, Sheet>();
-            Sheets.Add(primarySheet.Name, primarySheet);
-            PrimarySheet = primarySheet;
+            Rows = new List<Cell[]>();
         }
 
         /// <summary>
@@ -29,25 +27,9 @@ namespace Excel
         /// <returns>Cell or null if cell does not exists</returns>
         public Cell GetCell((int row, int column) adress)
         {
-            if (PrimarySheet.Cells.Count > adress.row && PrimarySheet.Cells[adress.row].Length > adress.column) return PrimarySheet.Cells[adress.row][adress.column];
+            if (Rows.Count > adress.row && Rows[adress.row].Length > adress.column) return Rows[adress.row][adress.column];
             else return null;
         }
-    }
-
-    /// <summary>
-    /// Sheet with cells
-    /// </summary>
-    public class Sheet
-    {
-        public List<Cell[]> Cells { get; }
-
-        public string Name { get; set; }
-
-        public Sheet()
-        {
-            Cells = new List<Cell[]>();
-        }
-
 
         /// <summary>
         /// Add row to sheet
@@ -55,7 +37,7 @@ namespace Excel
         /// <param name="cell">Cell</param>
         public void AddRow(Cell[] rowCells)
         {
-            Cells.Add(rowCells);
+            Rows.Add(rowCells);
         }
 
     }
@@ -71,20 +53,13 @@ namespace Excel
 
         public const string EmptyCellValue = "[]";
 
-        public readonly static char[] Alphabet = new char[] { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z' };
-
-        public readonly static Cell Empty = new Cell(0, 0) { Value = 0, IsEvaluated = true };
-
+        public readonly static Cell Empty = new Cell() { Value = 0, IsEvaluated = true };
 
         #endregion
 
         #region PROPS
 
-        public int AdressRow { get; }
-
-        public int AdressColumn { get; }
-
-        public object Value { get; set; }
+        public object Value;
 
         public ErrorTypeEnum ErrorType
         {
@@ -96,9 +71,9 @@ namespace Excel
             }
         }
 
-        public bool IsEvaluated { get; protected set; }
+        public bool IsEvaluated;
 
-        public bool IsEvaluating { get; protected set; }
+        public bool IsEvaluating;
 
         #endregion
 
@@ -110,12 +85,6 @@ namespace Excel
 
         #region CONSTRUCTORS
 
-        public Cell(int row, int column)
-        {
-            AdressRow = row;
-            AdressColumn = column;
-        }
-
         #endregion
 
         #region PUBLIC METHODS
@@ -123,8 +92,8 @@ namespace Excel
         /// <summary>
         /// Evaluate cell in specific context (sheet, range, multiple sheets ...)
         /// </summary>
-        /// <param name="context">Context object</param>
-        public void Evaluate(Context context)
+        /// <param name="sheet">Sheet object</param>
+        public void EvaluateExpression(Sheet sheet)
         {
             IsEvaluating = true;
 
@@ -138,9 +107,12 @@ namespace Excel
             }
             else if (Value is string valueStr && valueStr.Length > 0 && valueStr[0] == '=') // Expression
             {
-                (char op, Cell cell1, Cell cell2) = GetFormulaCells(valueStr, context);
-
-                if (op == ' ')
+                (char op, Cell cell1, Cell cell2, ErrorTypeEnum error) = GetExpressionCells(valueStr, sheet);
+                if (error > 0)
+                {
+                    ErrorType = error;
+                }
+                else if (op == ' ')
                 {
                     ErrorType = ErrorTypeEnum.MissingOperator;
                 }
@@ -155,11 +127,13 @@ namespace Excel
                         ErrorType = ErrorTypeEnum.Cycle;
                     }
                     else 
-                    { 
-                        if (!cell1.IsEvaluated) cell1.Evaluate(context);
+                    {
+                        bool cell1Evaluated = cell1.IsEvaluated;
+                        if (!cell1Evaluated) cell1.EvaluateExpression(sheet);
                         if (cell1.ErrorType > 0)
                         {
-                            ErrorType = ErrorTypeEnum.Cycle;
+                            if (!cell1Evaluated && cell1.ErrorType == ErrorTypeEnum.Cycle) ErrorType = ErrorTypeEnum.Cycle;
+                            else ErrorType = ErrorTypeEnum.Error;
                         }
                         else
                         {
@@ -169,11 +143,12 @@ namespace Excel
                             }
                             else
                             {
-                                if (!cell2.IsEvaluated) cell2.Evaluate(context);
-
+                                bool cell2Evaluated = cell2.IsEvaluated;
+                                if (!cell2Evaluated) cell2.EvaluateExpression(sheet);
                                 if (cell2.ErrorType > 0)
                                 {
-                                    ErrorType = ErrorTypeEnum.Error;
+                                    if (!cell2Evaluated && cell2.ErrorType == ErrorTypeEnum.Cycle) ErrorType = ErrorTypeEnum.Cycle;
+                                    else ErrorType = ErrorTypeEnum.Error;
                                 }
                                 else
                                 {
@@ -229,41 +204,38 @@ namespace Excel
 
         #region PRIVATE METHODS
 
-        private (char op, Cell cell1, Cell cell2) GetFormulaCells(string valueStr, Context context)
+        private static (char op, Cell cell1, Cell cell2, ErrorTypeEnum error) GetExpressionCells(string valueStr, Sheet sheet)
         {
+            ErrorTypeEnum error = ErrorTypeEnum.None;
             char op = ' ';
-            string adress1 = null, adress2 = null;
             for (int i = 1; i < valueStr.Length; i++)
             {
                 char c = valueStr[i];
                 if (op == ' ' && (c == '+' || c == '-' || c == '*' || c == '/'))
                 {
                     op = c;
-                    adress1 = valueStr.Substring(1, i - 1);
-                    adress2 = valueStr.Substring(i + 1, valueStr.Length - (i + 1));
+                    var adress1Indexes = GetRowAndColumnIndex(valueStr.Substring(1, i - 1));
+                    var adress2Indexes = GetRowAndColumnIndex(valueStr.Substring(i + 1, valueStr.Length - (i + 1)));
+                    if (adress1Indexes.row == -1 || adress2Indexes.row == -1)
+                    {
+                        error = ErrorTypeEnum.InvalidFormula;
+                    }
+                    else
+                    {
+                        Cell cell1 = sheet.GetCell(adress1Indexes);
+                        Cell cell2 = sheet.GetCell(adress2Indexes);
+
+                        if (cell1 == null) cell1 = Empty;
+                        if (cell2 == null) cell2 = Empty;
+
+                        return (op, cell1, cell2, error);
+                    }
                 }
             }
-
-            var adress1Indexes = GetRowAndColumnIndex(adress1);
-            var adress2Indexes = GetRowAndColumnIndex(adress2);
-            if (adress1Indexes.row == -1 || adress2Indexes.row == -1)
-            {
-                ErrorType = ErrorTypeEnum.InvalidFormula;
-            }
-            else
-            {
-                Cell cell1 = context.GetCell(adress1Indexes);
-                Cell cell2 = context.GetCell(adress2Indexes);
-
-                if (cell1 == null) cell1 = Empty;
-                if (cell2 == null) cell2 = Empty;
-
-                return (op, cell1, cell2);
-            }
-            return (op, null, null);
+            return (op, null, null, error);
         } 
 
-        private (int row, int column) GetRowAndColumnIndex(string adress)
+        private static (int row, int column) GetRowAndColumnIndex(string adress)
         {
             int row = 0, column = 0;
             if (adress == null) return (-1, -1);
@@ -293,9 +265,9 @@ namespace Excel
             return (row, column);
         }
 
-        private bool CharIsValidLetter(char c) => (64 < c && c < 91);
+        private static bool CharIsValidLetter(char c) => (64 < c && c < 91);
 
-        private bool CharIsValidDigit(char c) => (47 < c && c < 58);
+        private static bool CharIsValidDigit(char c) => (47 < c && c < 58);
 
         #endregion
 
@@ -303,6 +275,7 @@ namespace Excel
 
         public enum ErrorTypeEnum
         {
+            None = 0,
             Error = 1,
             DivisionByZero = 2,
             Cycle = 3,

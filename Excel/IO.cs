@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 
 namespace Excel
 {
@@ -10,24 +11,8 @@ namespace Excel
         public void Open();
 
         public string ReadLine();
-    }
 
-    public class ConsoleInputReader : IInputReader
-    {
-        public string ReadLine()
-        {
-            return Console.ReadLine();
-        }
-      
-        public void Open()
-        {
-
-        }
-
-        public void Dispose()
-        {
-
-        }
+        public string ReadWord(out bool newLine);
     }
 
     public class FileInputReader : IInputReader, IDisposable
@@ -43,17 +28,45 @@ namespace Excel
 
         public string ReadLine()
         {
-            return this._streamReader.ReadLine();
+            return _streamReader.ReadLine();
         }
 
         public void Open()
         {
-            this._streamReader = new StreamReader(_fileName);
+            _streamReader = new StreamReader(_fileName);
         }
 
         public void Dispose()
         {
-            this._streamReader.Dispose();
+            _streamReader.Dispose();
+        }
+
+        public string ReadWord(out bool newLine)
+        {
+            newLine = false;
+            string word = "";
+            while (word.Length == 0)
+            {
+                while (!_streamReader.EndOfStream)
+                {
+                    char c = (char)_streamReader.Read();
+                    if (c == '\r' || c == '\n')
+                    {
+                        newLine = true;
+                        break;
+                    }
+                    else if(c == ' ')
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        word += c;
+                    }
+                }
+                if (_streamReader.EndOfStream) break;
+            }
+            return word.ToString();
         }
     }
 

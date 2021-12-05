@@ -32,20 +32,27 @@ namespace Excel
             this.InputReader.Open();
             using (var reader = this.InputReader)
             {
-                int row = 0;
-                List<Cell> rowCells;
+                List<Cell> rowCells = new List<Cell>();
                 while (true)
                 {
-                    string line = reader.ReadLine();
-                    if (line == null) break;
-                    string[] rowCellsStr = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-                    rowCells = new List<Cell>();
-                    for (int col = 0; col < rowCellsStr.Length; col++)
+                    string word = reader.ReadWord(out bool newLine);
+                    if (word == "")
                     {
-                        rowCells.Add(new Cell(row, col) { Value = rowCellsStr[col]});   
+                        if (rowCells.Count > 0)
+                        {
+                            sheet.AddRow(rowCells.ToArray());
+                            rowCells.Clear();
+                        }
+                        break;
                     }
-                    sheet.AddRow(rowCells.ToArray());
-                    row++;
+
+                    rowCells.Add(new Cell() { Value = word });
+
+                    if (newLine)
+                    {
+                        sheet.AddRow(rowCells.ToArray());
+                        rowCells.Clear();
+                    }
                 }
             }
             return sheet;
@@ -56,22 +63,21 @@ namespace Excel
         /// </summary>
         /// <param name="sheet"></param>
         /// <param name="context"></param>
-        public void EvaluateAndWriteSheet(Sheet sheet, Context context)
+        public void EvaluateAndWriteSheet(Sheet sheet)
         {
             this.OutputWriter.Open();
             using (var writer = this.OutputWriter)
             {
-                foreach (var row in sheet.Cells)
+                //for(int row = 0; row < sheet.Rows.Count; row++)
+                for (int row = 0; row < sheet.Rows.Count; row++)
                 {
-                    for (int col = 0; col < row.Length ; col++)
+                    for (int col = 0; col < sheet.Rows[row].Length ; col++)
                     {
-                        Cell cell = row[col];
-
                         // Evaluate cell
-                        if(!cell.IsEvaluated) cell.Evaluate(context);
+                        if(!sheet.Rows[row][col].IsEvaluated) sheet.Rows[row][col].EvaluateExpression(sheet);
 
-                        writer.Write(cell.Value.ToString());
-                        if (col < row.Length - 1) writer.Write(" ");
+                        writer.Write(sheet.Rows[row][col].Value.ToString());
+                        if (col < sheet.Rows[row].Length - 1) writer.Write(" ");
                     }
                     writer.WriteLine("");
                     
