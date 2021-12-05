@@ -59,7 +59,7 @@ namespace Excel
 
         #region PROPS
 
-        public object Value;
+        public object Value { get; set; }
 
         public ErrorTypeEnum ErrorType
         {
@@ -71,9 +71,9 @@ namespace Excel
             }
         }
 
-        public bool IsEvaluated;
+        public bool IsEvaluated { get; set; }
 
-        public bool IsEvaluating;
+        public bool IsEvaluating { get; set; }
 
         #endregion
 
@@ -204,7 +204,7 @@ namespace Excel
 
         #region PRIVATE METHODS
 
-        private static (char op, Cell cell1, Cell cell2, ErrorTypeEnum error) GetExpressionCells(string valueStr, Sheet sheet)
+        private (char op, Cell cell1, Cell cell2, ErrorTypeEnum error) GetExpressionCells(string valueStr, Sheet sheet)
         {
             ErrorTypeEnum error = ErrorTypeEnum.None;
             char op = ' ';
@@ -235,7 +235,7 @@ namespace Excel
             return (op, null, null, error);
         } 
 
-        private static (int row, int column) GetRowAndColumnIndex(string adress)
+        private (int row, int column) GetRowAndColumnIndex(string adress)
         {
             int row = 0, column = 0;
             if (adress == null) return (-1, -1);
@@ -265,9 +265,9 @@ namespace Excel
             return (row, column);
         }
 
-        private static bool CharIsValidLetter(char c) => (64 < c && c < 91);
+        private bool CharIsValidLetter(char c) => (64 < c && c < 91);
 
-        private static bool CharIsValidDigit(char c) => (47 < c && c < 58);
+        private bool CharIsValidDigit(char c) => (47 < c && c < 58);
 
         #endregion
 
@@ -284,7 +284,7 @@ namespace Excel
             InvalidValue = 6,
         }
 
-        public static string ErrorTypeEnumToString(ErrorTypeEnum value)
+        public string ErrorTypeEnumToString(ErrorTypeEnum value)
         {
             switch (value)
             {
