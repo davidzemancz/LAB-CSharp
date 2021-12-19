@@ -5,24 +5,18 @@ namespace _
 {
     internal class Program
     {
-        class a
+        static void foo(int a, string b)
         {
-            public int x;
 
-            public int this[int i]
-            {
-                get => 0;
-            }
-
-            public void set_Item(int i)
-            {
-
-            }
         }
 
         static void Main(string[] args)
         {
-           a a = new a { x = 1 };
+            nint x = 7;
+            
+            int a = 4;
+            string b = "k";
+            foo(a = 7, b = "ahoj");
         }
     }
 }
