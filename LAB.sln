@@ -15,7 +15,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Excel", "Excel\Excel.csproj
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ExcelTests", "ExcelTests\ExcelTests.csproj", "{EE855724-7ECD-4183-B736-C82467E21015}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExprEval", "ExprEval\ExprEval.csproj", "{F9E6593B-171B-4F2D-B2A1-E650D90C37DC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ExprEval", "ExprEval\ExprEval.csproj", "{F9E6593B-171B-4F2D-B2A1-E650D90C37DC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Calculator", "Calculator\Calculator.csproj", "{7DA9403E-E1CB-4432-858A-9EC250D45EA7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -51,6 +53,10 @@ Global
 		{F9E6593B-171B-4F2D-B2A1-E650D90C37DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F9E6593B-171B-4F2D-B2A1-E650D90C37DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F9E6593B-171B-4F2D-B2A1-E650D90C37DC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7DA9403E-E1CB-4432-858A-9EC250D45EA7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7DA9403E-E1CB-4432-858A-9EC250D45EA7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7DA9403E-E1CB-4432-858A-9EC250D45EA7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7DA9403E-E1CB-4432-858A-9EC250D45EA7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
