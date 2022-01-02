@@ -48,20 +48,11 @@ namespace Calculator
                     else if (command[0] == '=' && command.Length > 2)
                     {
                         expression = new Expression(command.Substring(2));
-                        expression.Read(int32OperatorHandler, out status);
+                        expression.CheckFormat(doubleOperatorHandler, out status);
                         if (status.State == ExpressionEvaluationStatus.StateEnum.FormatError)
                         {
                             expression = null;
                             outputWriter.WriteLine(status.ToString());
-                        }
-                        else
-                        {
-                            expression.Read(doubleOperatorHandler, out status);
-                            if (status.State == ExpressionEvaluationStatus.StateEnum.FormatError)
-                            {
-                                expression = null;
-                                outputWriter.WriteLine(status.ToString());
-                            }
                         }
                     }
                     else

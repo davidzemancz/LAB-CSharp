@@ -6,11 +6,7 @@ using System.Threading.Tasks;
 
 namespace Calculator
 {
-    public interface ExpressionOperatorHandler
-    {
-    }
-
-    public interface ExpressionOperatorHandler<T> : ExpressionOperatorHandler
+    public interface ExpressionOperatorHandler<T>
     {
         public T Minus(T x, bool isChecked);
 
@@ -67,14 +63,13 @@ namespace Calculator
         /// </summary>
         public string Text { get; protected set; }
 
-        public Dictionary<ExpressionOperatorHandler, List<object>> Parts { get; set; }
+        public object Result { get; protected set; }
 
         #region CONSTRUCTORS
 
         public Expression(string text)
         {
             this.Text = text;
-            this.Parts = new Dictionary<ExpressionOperatorHandler, List<object>>();
         }
 
         #endregion
@@ -89,12 +84,16 @@ namespace Calculator
         public T Evaluate<T>(ExpressionOperatorHandler<T> operatonHandler, out ExpressionEvaluationStatus status)
         {
             status = new ExpressionEvaluationStatus(ExpressionEvaluationStatus.StateEnum.Ok);
+            if (Result != null && Result is T) return (T)Result;
+
             Stack<T> stack = new Stack<T>();
             try
             {
-                foreach (object part in this.Parts[operatonHandler])
+                for (int i = Text.Length - 1; i >= 0; i--)
                 {
-                    if (part is char c && CharIsOperator(c, out OperatorArityEnum arity))
+                    char c = Text[i];
+
+                    if (CharIsOperator(c, out OperatorArityEnum arity))
                     {
                         T result = default(T);
                         if (arity == OperatorArityEnum.Unary)
@@ -126,7 +125,8 @@ namespace Calculator
                                     if (operatonHandler.IsZeroDivisionCheck(num2))
                                     {
                                         status.State = ExpressionEvaluationStatus.StateEnum.DivideByZero;
-                                        return default(T);
+                                        Result = default(T);
+                                        return (T)Result;
                                     }
                                     result = operatonHandler.Divide(num1, num2, true);
                                     break;
@@ -136,29 +136,46 @@ namespace Calculator
                     }
                     else
                     {
-                        stack.Push((T)part);
+                        string numStr = ReadWord(ref i);
+                        if (numStr != "")
+                        {
+                            if (operatonHandler.TryParse(numStr, out T val))
+                            {
+                                stack.Push(val);
+                            }
+                            else
+                            {
+                                status.State = ExpressionEvaluationStatus.StateEnum.FormatError;
+                                Result = default(T);
+                                return (T)Result;
+                            }
+                        }
                     }
                 }
             }
             catch (OverflowException)
             {
                 status.State = ExpressionEvaluationStatus.StateEnum.OverflowError;
-                return default(T);
+                Result = default(T);
+                return (T)Result;
             }
-            catch (Exception ex)
+            catch
             {
                 status.State = ExpressionEvaluationStatus.StateEnum.FormatError;
-                return default(T);
+                Result = default(T);
+                return (T)Result;
             }
 
             if (stack.Count == 1)
             {
-                return stack.Peek();
+                Result = stack.Peek();
+                return (T)Result;
             }
             else
             {
                 status.State = ExpressionEvaluationStatus.StateEnum.FormatError;
-                return default(T);
+                Result = default(T);
+                return (T)Result;
             }
         }
 
@@ -167,10 +184,8 @@ namespace Calculator
         /// </summary>
         /// <param name="status">Status</param>
         /// <returns>Expression result or null, if error occurrs.</returns>
-        public void Read<T>(ExpressionOperatorHandler<T> operatonHandler, out ExpressionEvaluationStatus status)
+        public void CheckFormat<T>(ExpressionOperatorHandler<T> operatonHandler, out ExpressionEvaluationStatus status)
         {
-            this.Parts[operatonHandler] = new List<object>();
-
             status = new ExpressionEvaluationStatus(ExpressionEvaluationStatus.StateEnum.Ok);
             Stack<T> stack = new Stack<T>();
             try
@@ -192,7 +207,6 @@ namespace Calculator
                             T num2 = stack.Pop();
                         }
                         stack.Push(result);
-                        this.Parts[operatonHandler].Add(c);
                     }
                     else
                     {
@@ -202,7 +216,6 @@ namespace Calculator
                             if (operatonHandler.TryParse(numStr, out T val))
                             {
                                 stack.Push(val);
-                                this.Parts[operatonHandler].Add(val);
                             }
                             else
                             {

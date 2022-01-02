@@ -42,6 +42,11 @@ namespace Calculator
         {
             return isChecked ? checked(x - y) : x - y;
         }
+
+        public int Parse(string value)
+        {
+            return int.Parse(value);
+        }
     }
 
     public class DoubleOperatorHandler : ExpressionOperatorHandler<double>
@@ -79,6 +84,11 @@ namespace Calculator
         public double Subtract(double x, double y, bool isChecked)
         {
             return isChecked ? checked(x - y) : x - y;
+        }
+
+        public double Parse(string value)
+        {
+            return double.Parse(value);
         }
     }
 }
