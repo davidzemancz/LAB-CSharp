@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="input\**" />
+    <EmbeddedResource Remove="input\**" />
+    <None Remove="input\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="doc\" />
+  </ItemGroup>
+
+</Project>

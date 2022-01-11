@@ -1,0 +1,3 @@
+Player 1: Highest card (dQ)  (WINNER)
+Player 2: Highest card (hQ)  (WINNER)
+Player 3: Highest card (dX)
