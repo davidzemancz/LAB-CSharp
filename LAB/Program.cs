@@ -11,33 +11,10 @@ namespace LAB
     {
         static void Main(string[] args)
         {
-            const string error = "Error!";
-
-            try
-            {
-                int a = 0, b = 0;
-
-                string line = Console.ReadLine();
-                if (line == null) throw new Exception("No input");
-                else if (!int.TryParse(line, out a)) throw new Exception("Invalid input");
-                else if (a < 0) throw new Exception("Input less than zero");
-
-                line = Console.ReadLine();
-                if (line == null) throw new Exception("No input");
-                else if (!int.TryParse(line, out b)) throw new Exception("Invalid input");
-                else if (b < 0) throw new Exception("Input less than zero");
-
-                int result = a - b;
-
-                Console.WriteLine("Result: {0}", result);
-            }
-            catch (Exception)
-            {
-                Console.WriteLine(error);
-            }
+            TextProcessorHelper.RunAlignContent(new[] { @"C:\Users\david\OneDrive\MFFUK\2-1\C#\LAB\LAB\LAB\TestFiles\lab03\01.in", "C:\\Users\\david\\OneDrive\\MFFUK\\2-1\\C#\\LAB\\LAB\\LAB\\TestFiles\\lab03\\01.dz.out", "17" } );
         }
     }
-    /*
+
     internal class TextProcessorHelper
     {
         public static void RunAlignContent(string[] args)
@@ -62,7 +39,7 @@ namespace LAB
             {
                 using (TextProcessor textProcessor = new TextProcessor(new StreamReaderEx(inputFile), new StreamWriterEx(outputFile), TextProcessor.LF))
                 {
-                    textProcessor.AlignContent(maxLineLength, false, out err);
+                    textProcessor.AlignContent(maxLineLength, true, out err);
                     if (!string.IsNullOrEmpty(err)) Console.WriteLine(err);
                 }
             }
@@ -110,7 +87,7 @@ namespace LAB
                     {
                         try { textProcessor.Reader = new StreamReaderEx(inputFile); }
                         catch { continue; }
-                        
+
                         textProcessor.AlignContent(maxLineLength, highlightSpaces, out err);
                         if (!string.IsNullOrEmpty(err)) Console.WriteLine(err);
                         textProcessor.Reader.Dispose();
@@ -125,5 +102,5 @@ namespace LAB
 
         }
     }
-    */
+
 }

@@ -1,22 +1,45 @@
 ﻿using System;
-using System.Net.Sockets;
 
-namespace _
+class Program
 {
-    internal class Program
-    {
-        static void foo(int a, string b)
-        {
 
+    public class Objekt
+    {
+        private string jmeno;
+        public string JmenoGetSet
+        {
+            get
+            {
+                return jmeno;
+            }
+            set
+            {
+                if (jmeno == "Dita") throw new ArgumentException();
+                jmeno = value;
+            }
         }
 
-        static void Main(string[] args)
+
+
+        private string Jmeno;
+
+        public string GetJmeno()
         {
-            nint x = 7;
-            
-            int a = 4;
-            string b = "k";
-            foo(a = 7, b = "ahoj");
+            return Jmeno;
+        }
+
+        public void SetJmeno(string jmeno)
+        {
+            Jmeno = jmeno;
         }
     }
+
+    unsafe static void Main(string[] args)
+    {
+        Objekt obj = new Objekt();
+        string jmenoGetSet = obj.JmenoGetSet;
+
+    }
+
+   
 }
